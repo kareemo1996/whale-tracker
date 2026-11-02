@@ -704,22 +704,31 @@
                     // 2. Fetch REST Snapshot and metadata concurrently
                     try {
                         const [snapRes, oiRes, fundRes] = await Promise.all([
-                            fetch(`https://fapi.binance.com/fapi/v1/depth?symbol=${Config.activeSymbol}&limit=1000`),
-                            fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${Config.activeSymbol}`),
-                            fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${Config.activeSymbol}`)
+                            fetch(`https://fapi.binance.com/fapi/v1/depth?symbol=${Config.activeSymbol}&limit=1000`).catch(() => null),
+                            fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${Config.activeSymbol}`).catch(() => null),
+                            fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${Config.activeSymbol}`).catch(() => null)
                         ]);
-                        if(snapRes.ok) this.ob.applySnapshot(await snapRes.json());
                         
-                        if(oiRes.ok) {
+                        if(snapRes && snapRes.ok) {
+                            this.ob.applySnapshot(await snapRes.json());
+                        } else {
+                            console.warn("REST Snapshot failed. Starting with empty OB from WS only.");
+                            // Force sync state to true so WS updates start building the book immediately
+                            this.ob.synced = true; 
+                        }
+                        
+                        if(oiRes && oiRes.ok) {
                             const oiData = await oiRes.json();
                             document.getElementById(`card-oi-${Config.activeSymbol}`).textContent = Utils.fmtCur(parseFloat(oiData.openInterest));
                         }
-                        if(fundRes.ok) {
+                        if(fundRes && fundRes.ok) {
                             const fData = await fundRes.json();
                             document.getElementById(`card-f-${Config.activeSymbol}`).textContent = (parseFloat(fData.lastFundingRate)*100).toFixed(4)+'%';
                         }
                     } catch(e) {
-                        console.error("REST API Error", e);
+                        console.error("REST API Network Error", e);
+                        // Ensure WS still processes data even if REST fails completely
+                        this.ob.synced = true;
                     }
                 };
 
