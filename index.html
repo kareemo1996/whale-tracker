@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whale Entry Tracker Pro | محرك رصد الحيتان</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        dark: '#0b0e11', panel: '#181a20', borderColor: '#2b3139',
+                        textMain: '#eaecef', textMuted: '#848e9c',
+                        up: '#0ecb81', down: '#f6465d',
+                        upBg: 'rgba(14, 203, 129, 0.1)', downBg: 'rgba(246, 70, 93, 0.1)',
+                        warning: '#f0b90b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #0b0e11; color: #eaecef; font-size: 13px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #181a20; }
+        ::-webkit-scrollbar-thumb { background: #2b3139; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #474d57; }
+        .depth-bar-ask { background: linear-gradient(to left, rgba(246, 70, 93, 0.15) 0%, transparent 100%); }
+        .depth-bar-bid { background: linear-gradient(to left, rgba(14, 203, 129, 0.15) 0%, transparent 100%); }
+        @keyframes flashUp { 0% { background-color: rgba(14, 203, 129, 0.5); } 100% { background-color: transparent; } }
+        @keyframes flashDown { 0% { background-color: rgba(246, 70, 93, 0.5); } 100% { background-color: transparent; } }
+        .flash-up { animation: flashUp 0.8s ease-out; }
+        .flash-down { animation: flashDown 0.8s ease-out; }
+        table { border-collapse: separate; border-spacing: 0; }
+        th, td { white-space: nowrap; text-align: right; }
+        .heatmap-container { position: relative; width: 100%; height: 100%; }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        /* Modal Background */
+        .modal-bg { background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="bg-panel border-b border-borderColor h-14 flex items-center justify-between px-4 shrink-0 z-20">
+        <div class="flex items-center gap-4">
+            <div class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 flex items-center">
+                <i class="fa-solid fa-water mr-2"></i> Whale Entry Tracker <span class="text-xs text-warning ml-2 border border-warning px-1 rounded">PRO</span>
+            </div>
+            <div id="connection-status" class="flex items-center gap-2 text-[11px] font-semibold px-2 py-1 rounded-full bg-gray-800 text-textMuted border border-borderColor">
+                <div id="status-indicator" class="w-2 h-2 rounded-full bg-yellow-500"></div>
+                <span id="status-text">جاري الاتصال...</span>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <button onclick="document.getElementById('settings-modal').classList.remove('hidden')" class="bg-dark hover:bg-borderColor text-textMain border border-borderColor px-3 py-1.5 rounded transition-colors text-xs flex items-center gap-2">
+                <i class="fa-solid fa-gear"></i> الإعدادات
+            </button>
+        </div>
+    </header>
+
+    <!-- Top Cards (5 Coins Summary) -->
+    <div id="top-cards" class="bg-dark flex gap-3 p-3 shrink-0 overflow-x-auto border-b border-borderColor min-h-[90px]">
+        <!-- Rendered via JS -->
+    </div>
+
+    <!-- Main Dashboard Grid -->
+    <main class="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-3 p-3 relative">
+        
+        <!-- Left Column: Order Book Engine (3 cols) -->
+        <div class="lg:col-span-3 bg-panel border border-borderColor rounded-lg flex flex-col overflow-hidden">
+            <div class="p-2 border-b border-borderColor font-bold text-textMain flex justify-between items-center bg-dark/30">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-purple-400"></i> دفتر الأوامر
+                </div>
+                <div class="text-[11px] text-textMuted flex gap-2">
+                    <span id="ob-delay" class="text-up">تزامن: 0ms</span>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-hidden flex flex-col">
+                <table class="w-full text-[11px]">
+                    <thead class="text-textMuted">
+                        <tr class="border-b border-borderColor">
+                            <th class="py-1.5 px-2 w-1/3">السعر</th>
+                            <th class="py-1.5 px-2 w-1/3">القيمة ($)</th>
+                            <th class="py-1.5 px-2 w-1/3 text-left">ملاحظات</th>
+                        </tr>
+                    </thead>
+                </table>
+                <!-- Asks -->
+                <div class="flex-1 overflow-hidden flex flex-col-reverse" id="ob-asks-container">
+                    <table class="w-full text-[11px] relative"><tbody id="ob-asks-body"></tbody></table>
+                </div>
+            </div>
+
+            <!-- Spread -->
+            <div class="py-1.5 flex items-center justify-center border-y border-borderColor bg-dark text-base font-bold" id="ob-spread-price">--</div>
+
+            <!-- Bids -->
+            <div class="flex-1 overflow-hidden">
+                <table class="w-full text-[11px] relative"><tbody id="ob-bids-body"></tbody></table>
+            </div>
+        </div>
+
+        <!-- Middle Column: Heatmap & Alerts (5 cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-3 overflow-hidden">
+            
+            <!-- Liquidity Heatmap -->
+            <div class="h-1/2 bg-panel border border-borderColor rounded-lg flex flex-col overflow-hidden">
+                <div class="p-2 border-b border-borderColor font-bold text-textMain flex justify-between items-center bg-dark/30">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-fire text-orange-400"></i> خريطة السيولة المباشرة (Heatmap)
+                    </div>
+                </div>
+                <div class="flex-1 heatmap-container bg-dark" id="heatmap-wrapper">
+                    <canvas id="heatmap-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Alerts Log -->
+            <div class="h-1/2 bg-panel border border-borderColor rounded-lg flex flex-col overflow-hidden">
+                <div class="p-2 border-b border-borderColor font-bold text-textMain flex justify-between items-center bg-dark/30">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-warning"></i> التنبيهات المباشرة
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="App.exportAlerts('csv')" class="text-[10px] bg-dark border border-borderColor hover:bg-borderColor px-2 py-1 rounded">CSV</button>
+                        <button onclick="App.exportAlerts('json')" class="text-[10px] bg-dark border border-borderColor hover:bg-borderColor px-2 py-1 rounded">JSON</button>
+                    </div>
+                </div>
+                <div class="flex-1 overflow-auto">
+                    <table class="w-full text-[11px]">
+                        <thead class="text-textMuted sticky top-0 bg-panel border-b border-borderColor z-10">
+                            <tr>
+                                <th class="py-1.5 px-2">الوقت</th>
+                                <th class="py-1.5 px-2">النوع</th>
+                                <th class="py-1.5 px-2">السعر</th>
+                                <th class="py-1.5 px-2">التفاصيل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Analytics, Trades & Zones (4 cols) -->
+        <div class="lg:col-span-4 flex flex-col gap-3 overflow-hidden">
+            
+            <!-- Scenarios & Analytics -->
+            <div class="bg-panel border border-borderColor rounded-lg flex flex-col overflow-hidden shrink-0">
+                <div class="p-2 border-b border-borderColor font-bold text-textMain flex items-center gap-2 bg-dark/30">
+                    <i class="fa-solid fa-microchip text-blue-400"></i> تحليل النشاط (AI Engine)
+                </div>
+                <div class="p-3 text-[11px] flex flex-col gap-3">
+                    <div class="flex gap-4">
+                        <div class="flex-1 flex flex-col gap-1">
+                            <span class="text-textMuted">قوة الشراء (Buy Score)</span>
+                            <div class="w-full bg-dark h-2 rounded overflow-hidden">
+                                <div id="buy-score-bar" class="bg-up h-full" style="width: 0%"></div>
+                            </div>
+                            <span id="buy-score-val" class="font-bold">0 / 100</span>
+                        </div>
+                        <div class="flex-1 flex flex-col gap-1">
+                            <span class="text-textMuted">قوة البيع (Sell Score)</span>
+                            <div class="w-full bg-dark h-2 rounded overflow-hidden">
+                                <div id="sell-score-bar" class="bg-down h-full" style="width: 0%"></div>
+                            </div>
+                            <span id="sell-score-val" class="font-bold">0 / 100</span>
+                        </div>
+                    </div>
+                    <div class="p-2 bg-dark border border-borderColor rounded text-center">
+                        <div class="text-textMuted mb-1">السيناريو الحالي:</div>
+                        <div id="market-scenario" class="font-bold text-sm text-yellow-400">جاري جمع البيانات...</div>
+                        <div id="market-scenario-reason" class="text-[10px] text-textMuted mt-1">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Large Trades -->
+            <div class="flex-1 bg-panel border border-borderColor rounded-lg flex flex-col overflow-hidden min-h-[150px]">
+                <div class="p-2 border-b border-borderColor font-bold text-textMain flex justify-between items-center bg-dark/30">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-yellow-400"></i> صفقات الحيتان
+                    </div>
+                </div>
+                <div class="flex-1 overflow-auto">
+                    <table class="w-full text-[11px]">
+                        <thead class="text-textMuted sticky top-0 bg-panel border-b border-borderColor z-10">
+                            <tr>
+                                <th class="py-1.5 px-2">الوقت</th>
+                                <th class="py-1.5 px-2">السعر</th>
+                                <th class="py-1.5 px-2">القيمة ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="whale-trades-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Estimated Entry Zones -->
+            <div class="flex-1 bg-panel border border-borderColor rounded-lg flex flex-col overflow-hidden min-h-[150px]">
+                <div class="p-2 border-b border-borderColor font-bold text-textMain flex items-center gap-2 bg-dark/30">
+                    <i class="fa-solid fa-crosshairs text-emerald-400"></i> مناطق الدخول المحتملة
+                </div>
+                <div class="flex-1 overflow-auto p-2 space-y-2" id="liquidity-zones-container">
+                    <div class="text-center text-textMuted text-xs mt-4">جاري التحليل...</div>
+                </div>
+                <div class="p-1.5 text-center border-t border-borderColor bg-dark text-[9px] text-textMuted">
+                    ⚠️ تنويه: هذه المناطق مستنتجة من السيولة وليست دليلاً قاطعاً على مراكز الحيتان.
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 modal-bg z-50 flex items-center justify-center hidden">
+        <div class="bg-panel border border-borderColor rounded-xl w-96 shadow-2xl overflow-hidden">
+            <div class="p-4 border-b border-borderColor flex justify-between items-center bg-dark/50">
+                <h2 class="font-bold text-lg"><i class="fa-solid fa-sliders mr-2"></i> إعدادات الرصد</h2>
+                <button onclick="document.getElementById('settings-modal').classList.add('hidden')" class="text-textMuted hover:text-textMain"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div>
+                    <label class="block text-textMuted text-xs mb-1">الحد الأدنى لصفقات الحيتان ($)</label>
+                    <select id="setting-trade-thresh" class="w-full bg-dark border border-borderColor rounded p-2 text-sm outline-none">
+                        <option value="100000">100,000 $</option>
+                        <option value="250000">250,000 $</option>
+                        <option value="500000" selected>500,000 $</option>
+                        <option value="1000000">1,000,000 $</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-textMuted text-xs mb-1">الحد الأدنى للأوامر المعلقة ($)</label>
+                    <select id="setting-order-thresh" class="w-full bg-dark border border-borderColor rounded p-2 text-sm outline-none">
+                        <option value="250000">250,000 $</option>
+                        <option value="500000">500,000 $</option>
+                        <option value="1000000" selected>1,000,000 $</option>
+                        <option value="2000000">2,000,000 $</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-textMuted text-xs mb-1">تفعيل تنبيهات Spoofing</label>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="setting-spoofing" checked class="w-4 h-4 accent-warning bg-dark border-borderColor">
+                        <span class="text-sm">اكتشاف الأوامر الوهمية والمتلاعبة</span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-borderColor bg-dark/50 flex justify-end">
+                <button onclick="App.saveSettings()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-bold transition-colors">حفظ وتطبيق</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Global Utilities
+         */
+        const Utils = {
+            fmtCur: (v) => {
+                if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+                if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+                return v.toFixed(0);
+            },
+            fmtPrice: (p, s) => {
+                const num = parseFloat(p);
+                if (s.includes('DOGE')) return num.toFixed(5);
+                if (s.includes('SOL')) return num.toFixed(3);
+                if (s.includes('ETH')) return num.toFixed(2);
+                return num.toFixed(1);
+            },
+            fmtTime: (ms) => {
+                const d = new Date(ms);
+                return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+            },
+            downloadStr: (str, type, filename) => {
+                const blob = new Blob([str], { type });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = filename;
+                a.click(); URL.revokeObjectURL(url);
+            }
+        };
+
+        /**
+         * Settings / State Management
+         */
+        const Config = {
+            symbols: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'DOGEUSDT'],
+            activeSymbol: 'BTCUSDT',
+            tradeThresh: 500000,
+            orderThresh: 1000000,
+            spoofingEnabled: true,
+            
+            load() {
+                const saved = localStorage.getItem('whaleConfig');
+                if (saved) {
+                    const c = JSON.parse(saved);
+                    if(c.tradeThresh) this.tradeThresh = c.tradeThresh;
+                    if(c.orderThresh) this.orderThresh = c.orderThresh;
+                    if(c.spoofingEnabled !== undefined) this.spoofingEnabled = c.spoofingEnabled;
+                }
+                // Update Modal UI
+                document.getElementById('setting-trade-thresh').value = this.tradeThresh;
+                document.getElementById('setting-order-thresh').value = this.orderThresh;
+                document.getElementById('setting-spoofing').checked = this.spoofingEnabled;
+            },
+            save() {
+                this.tradeThresh = parseInt(document.getElementById('setting-trade-thresh').value);
+                this.orderThresh = parseInt(document.getElementById('setting-order-thresh').value);
+                this.spoofingEnabled = document.getElementById('setting-spoofing').checked;
+                localStorage.setItem('whaleConfig', JSON.stringify(this));
+            }
+        };
+
+        /**
+         * Alerts Manager
+         */
+        class AlertManager {
+            constructor() {
+                this.log = [];
+                this.tbody = document.getElementById('alerts-body');
+            }
+            
+            add(type, price, value, msg, isUp) {
+                const time = Date.now();
+                const item = { time, type, price, value, msg, isUp, sym: Config.activeSymbol };
+                this.log.unshift(item);
+                if (this.log.length > 200) this.log.pop();
+                
+                const tr = document.createElement('tr');
+                const color = type === 'Spoofing' ? 'text-warning' : (isUp ? 'text-up' : 'text-down');
+                tr.className = `border-b border-borderColor hover:bg-dark transition-colors ${type === 'Spoofing' ? 'bg-warning/10' : ''}`;
+                tr.innerHTML = `
+                    <td class="py-1.5 px-2 text-textMuted">${Utils.fmtTime(time)}</td>
+                    <td class="py-1.5 px-2 ${color} font-bold text-[10px]">${type}</td>
+                    <td class="py-1.5 px-2">${Utils.fmtPrice(price, item.sym)}</td>
+                    <td class="py-1.5 px-2 text-[10px] whitespace-normal w-full">${msg}</td>
+                `;
+                this.tbody.prepend(tr);
+                if (this.tbody.children.length > 50) this.tbody.removeChild(this.tbody.lastChild);
+            }
+
+            export(format) {
+                if (format === 'csv') {
+                    let csv = "Time,Symbol,Type,Price,Value,Message\n";
+                    this.log.forEach(l => {
+                        csv += `${new Date(l.time).toISOString()},${l.sym},${l.type},${l.price},${l.value},"${l.msg}"\n`;
+                    });
+                    Utils.downloadStr(csv, 'text/csv', 'whale_alerts.csv');
+                } else {
+                    Utils.downloadStr(JSON.stringify(this.log, null, 2), 'application/json', 'whale_alerts.json');
+                }
+            }
+        }
+
+        /**
+         * Liquidity Heatmap (Canvas)
+         */
+        class HeatmapRenderer {
+            constructor() {
+                this.canvas = document.getElementById('heatmap-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.history = []; // Array of {time, bids: [], asks: [], currentPrice}
+                this.maxHistory = 100; // frames
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                const wrapper = document.getElementById('heatmap-wrapper');
+                this.canvas.width = wrapper.clientWidth;
+                this.canvas.height = wrapper.clientHeight;
+            }
+
+            addFrame(currentPrice, bids, asks) {
+                // Keep only top orders to save memory and render time
+                const limit = 20;
+                this.history.push({
+                    time: Date.now(),
+                    price: currentPrice,
+                    bids: bids.slice(0, limit),
+                    asks: asks.slice(0, limit)
+                });
+                if (this.history.length > this.maxHistory) this.history.shift();
+            }
+
+            render() {
+                if(this.history.length === 0) return;
+                
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                this.ctx.clearRect(0, 0, w, h);
+                
+                const frameW = w / this.maxHistory;
+                const latestPrice = this.history[this.history.length - 1].price;
+                
+                // Define price range for Y axis (e.g., +/- 2%)
+                const range = latestPrice * 0.02;
+                const minP = latestPrice - range;
+                const maxP = latestPrice + range;
+
+                this.history.forEach((frame, i) => {
+                    const x = i * frameW;
+                    
+                    // Draw Asks (Red)
+                    frame.asks.forEach(ask => {
+                        if (ask.price > maxP || ask.price < minP) return;
+                        const y = h - ((ask.price - minP) / (maxP - minP) * h);
+                        const intensity = Math.min(ask.value / Config.orderThresh, 1);
+                        this.ctx.fillStyle = `rgba(246, 70, 93, ${intensity * 0.8})`;
+                        this.ctx.fillRect(x, y - 2, Math.ceil(frameW), 4);
+                    });
+
+                    // Draw Bids (Green)
+                    frame.bids.forEach(bid => {
+                        if (bid.price > maxP || bid.price < minP) return;
+                        const y = h - ((bid.price - minP) / (maxP - minP) * h);
+                        const intensity = Math.min(bid.value / Config.orderThresh, 1);
+                        this.ctx.fillStyle = `rgba(14, 203, 129, ${intensity * 0.8})`;
+                        this.ctx.fillRect(x, y - 2, Math.ceil(frameW), 4);
+                    });
+
+                    // Current Price Line
+                    const cy = h - ((frame.price - minP) / (maxP - minP) * h);
+                    this.ctx.fillStyle = '#f0b90b';
+                    this.ctx.fillRect(x, cy, Math.ceil(frameW), 1);
+                });
+            }
+        }
+
+        /**
+         * Analysis Engine (Scores & Scenarios)
+         */
+        class AnalysisEngine {
+            constructor() {
+                this.buyVol = 0;
+                this.sellVol = 0;
+                this.resetInterval = setInterval(() => { this.buyVol = 0; this.sellVol = 0; }, 5 * 60 * 1000); // Reset every 5m
+            }
+
+            addTrade(val, isBuy) {
+                if (isBuy) this.buyVol += val;
+                else this.sellVol += val;
+            }
+
+            analyze(bids, asks) {
+                const totalVol = this.buyVol + this.sellVol || 1; // avoid /0
+                let buyScore = (this.buyVol / totalVol) * 100;
+                let sellScore = (this.sellVol / totalVol) * 100;
+
+                // Adjust scores based on order book pressure
+                const topBidsVal = bids.slice(0,5).reduce((a,b)=>a+b.value, 0);
+                const topAsksVal = asks.slice(0,5).reduce((a,b)=>a+b.value, 0);
+                const obTotal = topBidsVal + topAsksVal || 1;
+                
+                buyScore = (buyScore * 0.6) + ((topBidsVal / obTotal * 100) * 0.4);
+                sellScore = (sellScore * 0.6) + ((topAsksVal / obTotal * 100) * 0.4);
+
+                document.getElementById('buy-score-bar').style.width = `${buyScore}%`;
+                document.getElementById('buy-score-val').textContent = `${buyScore.toFixed(0)} / 100`;
+                document.getElementById('sell-score-bar').style.width = `${sellScore}%`;
+                document.getElementById('sell-score-val').textContent = `${sellScore.toFixed(0)} / 100`;
+
+                // Determine Scenario
+                const scenEl = document.getElementById('market-scenario');
+                const reasEl = document.getElementById('market-scenario-reason');
+                
+                if (buyScore > 75) {
+                    scenEl.textContent = 'نشاط شرائي قوي (Strong Buy)';
+                    scenEl.className = 'font-bold text-sm text-up';
+                    reasEl.textContent = 'سيطرة صفقات الشراء الماركت مع دعم قوي في دفتر الأوامر.';
+                } else if (sellScore > 75) {
+                    scenEl.textContent = 'نشاط بيعي قوي (Strong Sell)';
+                    scenEl.className = 'font-bold text-sm text-down';
+                    reasEl.textContent = 'ضغط بيع عنيف مع تراكم لأوامر العرض (Asks).';
+                } else if (this.sellVol > this.buyVol * 2 && topBidsVal > topAsksVal * 1.5) {
+                    scenEl.textContent = 'امتصاص بيع (Sell Absorption)';
+                    scenEl.className = 'font-bold text-sm text-blue-400';
+                    reasEl.textContent = 'الحيتان تضع أوامر شراء لامتصاص ضغط البيع المستمر.';
+                } else if (this.buyVol > this.sellVol * 2 && topAsksVal > topBidsVal * 1.5) {
+                    scenEl.textContent = 'امتصاص شراء (Buy Absorption)';
+                    scenEl.className = 'font-bold text-sm text-purple-400';
+                    reasEl.textContent = 'الحيتان تضع أوامر بيع لامتصاص قوة الشراء.';
+                } else {
+                    scenEl.textContent = 'سوق محايد / تراكم';
+                    scenEl.className = 'font-bold text-sm text-textMuted';
+                    reasEl.textContent = 'توازن بين قوى العرض والطلب.';
+                }
+            }
+        }
+
+        /**
+         * Local Order Book Sync & Spoofing Detection
+         */
+        class LocalOrderBook {
+            constructor() {
+                this.bids = new Map();
+                this.asks = new Map();
+                this.lastUpdateId = 0;
+                this.synced = false;
+                this.buffer = [];
+                this.orderHistory = new Map(); // For Spoofing: {price: {time, maxVal}}
+            }
+
+            reset() {
+                this.bids.clear();
+                this.asks.clear();
+                this.lastUpdateId = 0;
+                this.synced = false;
+                this.buffer = [];
+                this.orderHistory.clear();
+            }
+
+            applySnapshot(data) {
+                this.lastUpdateId = data.lastUpdateId;
+                data.bids.forEach(b => this.bids.set(parseFloat(b[0]), parseFloat(b[1])));
+                data.asks.forEach(a => this.asks.set(parseFloat(a[0]), parseFloat(a[1])));
+                this.synced = true;
+                
+                // Process buffered messages
+                this.buffer.forEach(msg => this.processWSMsg(msg));
+                this.buffer = [];
+            }
+
+            processWSMsg(msg) {
+                if (!this.synced) {
+                    this.buffer.push(msg);
+                    return;
+                }
+                if (msg.u <= this.lastUpdateId) return; // Drop older
+
+                this.updateLevel(this.bids, msg.b, true);
+                this.updateLevel(this.asks, msg.a, false);
+                this.lastUpdateId = msg.u;
+            }
+
+            updateLevel(map, updates, isBid) {
+                const currentPrice = State.prices[Config.activeSymbol];
+                const now = Date.now();
+
+                updates.forEach(u => {
+                    const price = parseFloat(u[0]);
+                    const qty = parseFloat(u[1]);
+                    const value = price * qty;
+                    const prevQty = map.get(price) || 0;
+                    
+                    if (qty === 0) {
+                        map.delete(price);
+                        this.checkSpoofing(price, value, currentPrice, now, isBid, true);
+                    } else {
+                        map.set(price, qty);
+                        if (value >= Config.orderThresh) {
+                            if (!this.orderHistory.has(price)) {
+                                this.orderHistory.set(price, { time: now, maxVal: value });
+                                // Alert New Whale Limit Order
+                                if (value >= Config.orderThresh * 1.5) {
+                                    App.alerts.add('Limit Order', price, value, `أمر ${isBid?'شراء':'بيع'} ضخم جديد.`, isBid);
+                                }
+                            } else {
+                                this.orderHistory.get(price).maxVal = Math.max(this.orderHistory.get(price).maxVal, value);
+                            }
+                        }
+                    }
+                });
+            }
+
+            checkSpoofing(price, value, currentPrice, now, isBid, isDeleted) {
+                if (!Config.spoofingEnabled || !currentPrice) return;
+                
+                const hist = this.orderHistory.get(price);
+                if (hist && isDeleted) {
+                    const timeAlive = now - hist.time;
+                    const dist = Math.abs(price - currentPrice) / currentPrice;
+                    
+                    // If order existed for less than 15s, was huge, and price didn't reach it (dist > 0.15%)
+                    if (timeAlive < 15000 && hist.maxVal >= Config.orderThresh && dist > 0.0015) {
+                        App.alerts.add('Spoofing', price, hist.maxVal, `تم إلغاء أمر ${isBid?'شراء':'بيع'} وهمي سريعا، البعد: ${(dist*100).toFixed(2)}%`, !isBid);
+                    }
+                    this.orderHistory.delete(price);
+                }
+            }
+
+            getTopLevels(limit = 15) {
+                const bidsArr = [];
+                for (let [p, q] of this.bids) bidsArr.push({price: p, qty: q, value: p*q});
+                bidsArr.sort((a,b) => b.price - a.price);
+
+                const asksArr = [];
+                for (let [p, q] of this.asks) asksArr.push({price: p, qty: q, value: p*q});
+                asksArr.sort((a,b) => a.price - b.price);
+
+                return {
+                    bids: bidsArr.slice(0, limit),
+                    asks: asksArr.slice(0, limit)
+                };
+            }
+        }
+
+        /**
+         * Global State & Application Orchestrator
+         */
+        const State = {
+            prices: {}, changes: {}, oi: {}, funding: {},
+            currentPrice: 0,
+            isConnected: false,
+        };
+
+        const App = {
+            ob: new LocalOrderBook(),
+            alerts: new AlertManager(),
+            heatmap: new HeatmapRenderer(),
+            ai: new AnalysisEngine(),
+            ws: null,
+            renderRaf: null,
+            lastRender: 0,
+            
+            init() {
+                Config.load();
+                this.buildTopCards();
+                this.connectAll();
+                this.loop();
+            },
+
+            saveSettings() {
+                Config.save();
+                document.getElementById('settings-modal').classList.add('hidden');
+                // Reconnect to apply new thresholds implicitly
+                this.changeSymbol(Config.activeSymbol); 
+            },
+
+            buildTopCards() {
+                const container = document.getElementById('top-cards');
+                container.innerHTML = Config.symbols.map(sym => `
+                    <div id="card-${sym}" onclick="App.changeSymbol('${sym}')" class="min-w-[140px] flex-1 bg-panel border ${sym === Config.activeSymbol ? 'border-blue-500 bg-dark' : 'border-borderColor hover:bg-dark'} rounded cursor-pointer p-2 transition-colors">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-sm">${sym.replace('USDT','')}</span>
+                            <span id="card-change-${sym}" class="text-[10px] bg-dark px-1 rounded">--</span>
+                        </div>
+                        <div id="card-price-${sym}" class="text-base font-bold mb-1">--</div>
+                        <div class="text-[9px] text-textMuted flex justify-between">
+                            <span>OI: <span id="card-oi-${sym}">--</span></span>
+                            <span>F: <span id="card-f-${sym}">--</span></span>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            updateCardState(sym) {
+                Config.symbols.forEach(s => {
+                    const el = document.getElementById(`card-${s}`);
+                    if(el) el.className = `min-w-[140px] flex-1 bg-panel border ${s === sym ? 'border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)] bg-dark' : 'border-borderColor hover:bg-dark'} rounded cursor-pointer p-2 transition-colors`;
+                });
+            },
+
+            changeSymbol(sym) {
+                if (sym === Config.activeSymbol) return;
+                Config.activeSymbol = sym;
+                this.updateCardState(sym);
+                
+                // Clear UI
+                document.getElementById('ob-asks-body').innerHTML = '';
+                document.getElementById('ob-bids-body').innerHTML = '';
+                document.getElementById('whale-trades-body').innerHTML = '';
+                document.getElementById('liquidity-zones-container').innerHTML = '<div class="text-center text-textMuted text-xs mt-4">جاري التحليل...</div>';
+                
+                this.ob.reset();
+                this.connectAll();
+            },
+
+            async connectAll() {
+                this.setStatus('connecting');
+                if (this.ws) this.ws.close();
+                
+                // 1. Start WS buffering
+                const streams = [
+                    '!ticker@arr', // All tickers for top cards
+                    `${Config.activeSymbol.toLowerCase()}@depth@100ms`, // Local OB sync
+                    `${Config.activeSymbol.toLowerCase()}@aggTrade` // Trades
+                ].join('/');
+                
+                this.ws = new WebSocket(`wss://fstream.binance.com/stream?streams=${streams}`);
+                
+                this.ws.onopen = async () => {
+                    this.setStatus('connected');
+                    // 2. Fetch REST Snapshot and metadata concurrently
+                    try {
+                        const [snapRes, oiRes, fundRes] = await Promise.all([
+                            fetch(`https://fapi.binance.com/fapi/v1/depth?symbol=${Config.activeSymbol}&limit=1000`),
+                            fetch(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${Config.activeSymbol}`),
+                            fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${Config.activeSymbol}`)
+                        ]);
+                        if(snapRes.ok) this.ob.applySnapshot(await snapRes.json());
+                        
+                        if(oiRes.ok) {
+                            const oiData = await oiRes.json();
+                            document.getElementById(`card-oi-${Config.activeSymbol}`).textContent = Utils.fmtCur(parseFloat(oiData.openInterest));
+                        }
+                        if(fundRes.ok) {
+                            const fData = await fundRes.json();
+                            document.getElementById(`card-f-${Config.activeSymbol}`).textContent = (parseFloat(fData.lastFundingRate)*100).toFixed(4)+'%';
+                        }
+                    } catch(e) {
+                        console.error("REST API Error", e);
+                    }
+                };
+
+                this.ws.onmessage = (e) => this.handleWSMsg(JSON.parse(e.data));
+                this.ws.onclose = () => {
+                    this.setStatus('disconnected');
+                    setTimeout(() => this.connectAll(), 3000);
+                };
+            },
+
+            setStatus(status) {
+                const sText = document.getElementById('status-text');
+                const sInd = document.getElementById('status-indicator');
+                const sCon = document.getElementById('connection-status');
+                if (status === 'connected') {
+                    sText.textContent = 'متصل (Real-time)';
+                    sInd.className = 'w-2 h-2 rounded-full bg-up shadow-[0_0_5px_#0ecb81]';
+                    sCon.className = 'flex items-center gap-2 text-[11px] font-semibold px-2 py-1 rounded-full bg-upBg text-up border border-up/30';
+                } else if (status === 'connecting') {
+                    sText.textContent = 'جاري الاتصال...';
+                    sInd.className = 'w-2 h-2 rounded-full bg-yellow-500 animate-pulse';
+                    sCon.className = 'flex items-center gap-2 text-[11px] font-semibold px-2 py-1 rounded-full bg-gray-800 text-textMuted border border-borderColor';
+                } else {
+                    sText.textContent = 'مفصول';
+                    sInd.className = 'w-2 h-2 rounded-full bg-down';
+                    sCon.className = 'flex items-center gap-2 text-[11px] font-semibold px-2 py-1 rounded-full bg-red-900/20 text-down border border-red-900';
+                }
+            },
+
+            handleWSMsg(payload) {
+                if (!payload || !payload.stream) return;
+                const stream = payload.stream;
+                const data = payload.data;
+
+                if (stream === '!ticker@arr') {
+                    data.forEach(t => {
+                        const sym = t.s;
+                        if (!Config.symbols.includes(sym)) return;
+                        
+                        State.prices[sym] = parseFloat(t.c);
+                        
+                        // Update Top Cards
+                        const pEl = document.getElementById(`card-price-${sym}`);
+                        const cEl = document.getElementById(`card-change-${sym}`);
+                        if(pEl) {
+                            const oldP = parseFloat(pEl.dataset.p || 0);
+                            const newP = State.prices[sym];
+                            if(newP !== oldP) {
+                                pEl.className = `text-base font-bold mb-1 ${newP > oldP ? 'text-up' : 'text-down'}`;
+                                setTimeout(()=> pEl.className='text-base font-bold mb-1 text-textMain', 300);
+                            }
+                            pEl.textContent = Utils.fmtPrice(newP, sym);
+                            pEl.dataset.p = newP;
+                            
+                            const chg = parseFloat(t.P);
+                            cEl.textContent = (chg>=0?'+':'') + chg.toFixed(2) + '%';
+                            cEl.className = `text-[10px] px-1 rounded bg-dark border border-borderColor ${chg>=0?'text-up':'text-down'}`;
+                        }
+
+                        if (sym === Config.activeSymbol) {
+                            State.currentPrice = State.prices[sym];
+                            const spread = document.getElementById('ob-spread-price');
+                            spread.textContent = Utils.fmtPrice(State.currentPrice, sym);
+                            spread.className = `py-1.5 flex items-center justify-center border-y border-borderColor bg-dark/80 text-base font-bold ${parseFloat(t.c) >= parseFloat(t.o) ? 'text-up shadow-[inset_0_0_10px_rgba(14,203,129,0.1)]' : 'text-down shadow-[inset_0_0_10px_rgba(246,70,93,0.1)]'}`;
+                        }
+                    });
+                } 
+                else if (stream.includes('@depth')) {
+                    this.ob.processWSMsg(data);
+                }
+                else if (stream.includes('@aggTrade')) {
+                    this.processTrade(data);
+                }
+            },
+
+            processTrade(data) {
+                const price = parseFloat(data.p);
+                const qty = parseFloat(data.q);
+                const val = price * qty;
+                const isBuy = !data.m; // Maker is NOT buyer = Taker Buy
+
+                if (val >= Config.tradeThresh) {
+                    this.ai.addTrade(val, isBuy);
+                    
+                    if (val >= Config.tradeThresh * 2) {
+                        this.alerts.add('Large Trade', price, val, `تنفيذ ماركت ${isBuy?'شراء':'بيع'} عنيف.`, isBuy);
+                    }
+
+                    const tb = document.getElementById('whale-trades-body');
+                    const tr = document.createElement('tr');
+                    tr.className = `border-b border-borderColor hover:bg-dark ${isBuy?'flash-up text-up':'flash-down text-down'}`;
+                    tr.innerHTML = `
+                        <td class="py-1.5 px-2 text-textMuted">${Utils.fmtTime(data.T)}</td>
+                        <td class="py-1.5 px-2 font-bold">${Utils.fmtPrice(price, Config.activeSymbol)}</td>
+                        <td class="py-1.5 px-2 font-bold">${Utils.fmtCur(val)}</td>
+                    `;
+                    tb.prepend(tr);
+                    if (tb.children.length > 50) tb.removeChild(tb.lastChild);
+                }
+            },
+
+            loop() {
+                const now = Date.now();
+                if (now - this.lastRender > 250) { // Render 4 times a second
+                    this.renderUI();
+                    this.lastRender = now;
+                }
+                this.renderRaf = requestAnimationFrame(() => this.loop());
+            },
+
+            renderUI() {
+                if (!this.ob.synced || !State.currentPrice) return;
+                
+                const {bids, asks} = this.ob.getTopLevels(15);
+                const maxVal = Math.max(...bids.map(b=>b.value), ...asks.map(a=>a.value), Config.orderThresh);
+
+                // Render Asks
+                let aHtml = '';
+                [...asks].reverse().forEach(a => {
+                    const w = Math.min((a.value / maxVal)*100, 100);
+                    const isWhale = a.value >= Config.orderThresh;
+                    let note = isWhale ? '<i class="fa-solid fa-whale text-blue-400"></i> حوت' : '';
+                    
+                    const hist = this.ob.orderHistory.get(a.price);
+                    if(hist && (Date.now() - hist.time > 60000) && isWhale) note = '<i class="fa-solid fa-anchor text-purple-400"></i> ثابت';
+
+                    aHtml += `
+                        <tr class="relative text-down hover:bg-dark group">
+                            <td class="absolute inset-0 depth-bar-ask z-0" style="width: ${w}%;"></td>
+                            <td class="py-1 px-2 z-10 relative font-semibold">${Utils.fmtPrice(a.price, Config.activeSymbol)}</td>
+                            <td class="py-1 px-2 z-10 relative ${isWhale?'font-bold text-white':''}">${Utils.fmtCur(a.value)}</td>
+                            <td class="py-1 px-2 z-10 relative text-left text-[10px] opacity-80">${note}</td>
+                        </tr>`;
+                });
+                document.getElementById('ob-asks-body').innerHTML = aHtml;
+
+                // Render Bids
+                let bHtml = '';
+                bids.forEach(b => {
+                    const w = Math.min((b.value / maxVal)*100, 100);
+                    const isWhale = b.value >= Config.orderThresh;
+                    let note = isWhale ? '<i class="fa-solid fa-whale text-blue-400"></i> حوت' : '';
+                    
+                    const hist = this.ob.orderHistory.get(b.price);
+                    if(hist && (Date.now() - hist.time > 60000) && isWhale) note = '<i class="fa-solid fa-anchor text-purple-400"></i> ثابت';
+
+                    bHtml += `
+                        <tr class="relative text-up hover:bg-dark group">
+                            <td class="absolute inset-0 depth-bar-bid z-0" style="width: ${w}%;"></td>
+                            <td class="py-1 px-2 z-10 relative font-semibold">${Utils.fmtPrice(b.price, Config.activeSymbol)}</td>
+                            <td class="py-1 px-2 z-10 relative ${isWhale?'font-bold text-white':''}">${Utils.fmtCur(b.value)}</td>
+                            <td class="py-1 px-2 z-10 relative text-left text-[10px] opacity-80">${note}</td>
+                        </tr>`;
+                });
+                document.getElementById('ob-bids-body').innerHTML = bHtml;
+
+                // Sync Delay visual
+                document.getElementById('ob-delay').textContent = `تحديث: ${Utils.fmtTime(Date.now())}`;
+
+                // Update Heatmap & AI
+                this.heatmap.addFrame(State.currentPrice, bids, asks);
+                this.heatmap.render();
+                
+                this.ai.analyze(bids, asks);
+                this.renderZones(bids, asks);
+            },
+
+            renderZones(bids, asks) {
+                const zones = [];
+                // Find heavy clusters
+                const bWhales = bids.filter(x => x.value >= Config.orderThresh);
+                const aWhales = asks.filter(x => x.value >= Config.orderThresh);
+
+                if(aWhales.length > 0) {
+                    zones.push({type:'ask', price: aWhales[0].price, val: aWhales[0].value});
+                }
+                if(bWhales.length > 0) {
+                    zones.push({type:'bid', price: bWhales[0].price, val: bWhales[0].value});
+                }
+
+                const zCont = document.getElementById('liquidity-zones-container');
+                if (zones.length === 0) {
+                    zCont.innerHTML = '<div class="text-center text-textMuted text-xs mt-4">لا يوجد تجمع سيولة واضح حاليا</div>';
+                    return;
+                }
+
+                zCont.innerHTML = zones.map(z => {
+                    const isAsk = z.type === 'ask';
+                    const c = isAsk ? 'bg-down text-down border-down/30' : 'bg-up text-up border-up/30';
+                    const t = isAsk ? 'مقاومة محتملة (عرض)' : 'دعم محتمل (طلب)';
+                    const dist = Math.abs(z.price - State.currentPrice) / State.currentPrice * 100;
+                    return `
+                        <div class="bg-dark rounded p-2 border ${c} flex flex-col gap-1 relative overflow-hidden">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-sm text-textMain">${Utils.fmtPrice(z.price, Config.activeSymbol)}</span>
+                                <span class="text-[9px] bg-panel px-1.5 py-0.5 rounded border border-borderColor">${t}</span>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px] text-textMuted">
+                                <span>حجم السيولة: <span class="font-bold ${isAsk?'text-down':'text-up'}">${Utils.fmtCur(z.val)}$</span></span>
+                                <span>البعد: ${dist.toFixed(2)}%</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+            
+            exportAlerts(format) {
+                this.alerts.export(format);
+            }
+        };
+
+        // Start application
+        window.onload = () => App.init();
+    </script>
+</body>
+</html>
