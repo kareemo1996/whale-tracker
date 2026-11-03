@@ -80,6 +80,18 @@
         .imb-bar { height: 6px; border-radius: 3px; background: var(--color-sell); overflow: hidden; margin: 6px auto 0; max-width: 200px; }
         .imb-bar > i { display: block; height: 100%; width: 50%; background: var(--color-buy); transition: width .3s; }
 
+        .pinned { position: sticky; top: 0; z-index: 3; display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; background: var(--bg-card); }
+        .mega-item { position: relative; padding: 10px 12px; border-radius: 6px; border: 2px solid; background: rgba(240,185,11,.08); }
+        .mega-item.buy { border-color: var(--color-buy); } .mega-item.sell { border-color: var(--color-sell); }
+        .mega-title { font-weight: bold; font-size: .95rem; }
+        .mega-val { font-size: 1.6rem; font-weight: 800; }
+        .mega-item.buy .mega-val { color: var(--color-buy); } .mega-item.sell .mega-val { color: var(--color-sell); }
+        .mega-x { position: absolute; top: 6px; left: 8px; background: none; border: 0; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
+        .mega-toast { position: fixed; top: 16px; left: 50%; transform: translate(-50%, -200%); z-index: 100; padding: 16px 28px; border-radius: 10px; color: #fff; font-size: 1.15rem; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 8px 32px rgba(0,0,0,.6); transition: transform .35s; cursor: pointer; max-width: 92vw; text-align: center; }
+        .mega-toast.show { transform: translate(-50%, 0); }
+        .mega-toast.buy { background: #0a8f5c; } .mega-toast.sell { background: #c6283d; }
+        @media (prefers-reduced-motion: reduce) { .mega-toast { transition: none; } }
+
         /* Scrollbar */
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
@@ -91,6 +103,7 @@
 </head>
 <body>
 
+    <div class="mega-toast" id="mega-toast" role="alert" onclick="this.classList.remove('show')"></div>
     <nav class="navbar">
         <div class="logo"><span>W</span> Whale Order Tracker Pro</div>
         <div class="controls">
@@ -238,6 +251,11 @@
     let SOUND_ON = store.get('sound', '0') === '1';
     let PAUSED = false;
     const MAX_TRADES = 5000;
+    const MEGA_TRADE = 3000000; // single trades at/above this get a pinned alert + big toast, regardless of the trade-size filter
+    // BNB's futures book is thin (20 levels span only ~$0.20), so the same $ threshold almost never triggers there.
+    const COIN_SCALE = { BNBUSDT: 0.25 };
+    const wallMin = c => WHALE_THRESHOLD * (COIN_SCALE[c] || 1);
+    const tradeMin = c => TRADE_THRESHOLD * (COIN_SCALE[c] || 1);
     let ACTIVE_COIN_FILTER = $('coin-filter').value;
     let TIMEFRAME_FILTER = 900000; // set from the select by updateFilters()
 
@@ -253,6 +271,8 @@
         alerts: []
     };
 
+    STATE.depthInfo = {}; // per coin: last update + largest visible level per side (diagnostics for empty tables)
+    STATE.pinned = [];    // mega trades, stay until dismissed
     const MAX_CANCELLED = 60;            // hard cap for cancelledOrders
     const CANCELLED_VISIBLE_MS = 30000;  // how long a vanished order stays visible (filtered at render time)
 
@@ -305,9 +325,9 @@
         $('btn-pause').textContent = PAUSED ? '▶ استئناف' : '⏸ إيقاف';
         $('btn-pause').classList.toggle('on', PAUSED);
     }
-    function toggleSound() { SOUND_ON = !SOUND_ON; store.set('sound', SOUND_ON ? '1' : '0'); syncButtons(); if (SOUND_ON) beep('buy'); }
+    function toggleSound() { SOUND_ON = !SOUND_ON; store.set('sound', SOUND_ON ? '1' : '0'); syncButtons(); if (SOUND_ON) { beep('buy'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} } }
     function togglePause() { PAUSED = !PAUSED; syncButtons(); if (!PAUSED) renderUI(); } // pauses the display only; data keeps flowing
-    function clearData() { STATE.largeTrades.length = 0; STATE.cancelledOrders.length = 0; STATE.alerts.length = 0; alertsDirty = true; renderUI(); }
+    function clearData() { STATE.largeTrades.length = 0; STATE.cancelledOrders.length = 0; STATE.alerts.length = 0; STATE.pinned.length = 0; alertsDirty = true; renderUI(); }
     function exportCSV() {
         const rows = ['time,coin,side,price,value_usd'].concat(STATE.largeTrades.map(t =>
             [new Date(t.time).toISOString(), t.coin, t.type, t.price, t.value.toFixed(2)].join(',')));
@@ -318,6 +338,33 @@
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     }
 
+    function megaBeep() {
+        if (!SOUND_ON) return;
+        try {
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            [660, 880, 1100].forEach((f, i) => {
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + i * 0.22;
+                o.type = 'square'; o.frequency.value = f; g.gain.value = 0.08;
+                o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + 0.18);
+            });
+        } catch (e) {}
+    }
+    let megaId = 0, toastTimer = null;
+    function processMega(coin, price, value, type) {
+        STATE.pinned.unshift({ id: ++megaId, coin, price, value, type, time: Date.now() });
+        if (STATE.pinned.length > 8) STATE.pinned.length = 8;
+        alertsDirty = true;
+        const label = `${type === 'buy' ? 'شراء' : 'بيع'} ماركت ${coin.replace('USDT','')} بقيمة ${formatCurrency(value)} عند ${fmtPrice(price)}`;
+        const t = $('mega-toast');
+        t.className = 'mega-toast show ' + type;
+        t.innerHTML = `<b>🐋 صفقة ضخمة!</b><span>${label}</span>`;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 10000);
+        megaBeep();
+        try { if ('Notification' in window && Notification.permission === 'granted') new Notification('🐋 صفقة ضخمة', { body: label }); } catch (e) {}
+    }
+    function dismissMega(id) { STATE.pinned = STATE.pinned.filter(m => m.id !== id); alertsDirty = true; renderUI(); }
+
     // WebSockets (Split for Stability)
     // Binance USD-M futures now routes streams by category: partial depth lives on /public,
     // aggTrade (and other market streams) on /market. Change these two constants if Binance moves them again.
@@ -327,7 +374,7 @@
 
     let wsDepth, wsTrades, reconnectTimer = null;
     let retries = 0, lastMsg = Date.now(), bootTime = Date.now();
-    const open = { depth: false, trades: false };
+    const sockOpen = { depth: false, trades: false };
 
     function setOffline() {
         document.getElementById('ws-dot').classList.add('offline');
@@ -368,9 +415,9 @@
         // WS 2: Aggregated trades (also our live price source, so no separate ticker stream is needed).
         wsTrades = new WebSocket(`${WS_TRADES_URL}?streams=${tradeStreams}`);
 
-        open.depth = open.trades = false;
+        sockOpen.depth = sockOpen.trades = false;
         // "Connected" only when BOTH sockets are open.
-        const onOpen = k => () => { open[k] = true; lastMsg = Date.now(); if (open.depth && open.trades) { retries = 0; setOnline(); } };
+        const onOpen = k => () => { sockOpen[k] = true; lastMsg = Date.now(); if (sockOpen.depth && sockOpen.trades) { retries = 0; setOnline(); } };
         wsDepth.onopen = onOpen('depth');
         wsTrades.onopen = onOpen('trades');
         wsDepth.onclose = scheduleReconnect;
@@ -407,7 +454,8 @@
 
             if(STATE.prices[coin] !== undefined) STATE.prices[coin] = price; // always-fresh reference price
 
-            if(value >= TRADE_THRESHOLD) {
+            if(value >= MEGA_TRADE) processMega(coin, price, value, isBuyerMaker ? 'sell' : 'buy');
+            if(value >= tradeMin(coin)) {
                 processLargeTrade(coin, price, value, isBuyerMaker ? 'sell' : 'buy');
             }
         };
@@ -415,7 +463,7 @@
 
     function pushCancelled(whale, now) {
         STATE.cancelledOrders.unshift({ ...whale, status: whale.filled ? 'نُفذ' : 'أُلغي', gone: true, since: whale.time, time: now });
-        if(whale.value >= WHALE_THRESHOLD * 3) addAlert('system', `${whale.filled ? 'تنفيذ/امتصاص' : 'سحب'} جدار ${whale.type==='bid'?'طلب':'عرض'} على ${whale.coin.replace('USDT','')} عند ${fmtPrice(whale.price)} (${formatCurrency(whale.value)})`);
+        if(whale.value >= wallMin(whale.coin) * 3) addAlert('system', `${whale.filled ? 'تنفيذ/امتصاص' : 'سحب'} جدار ${whale.type==='bid'?'طلب':'عرض'} على ${whale.coin.replace('USDT','')} عند ${fmtPrice(whale.price)} (${formatCurrency(whale.value)})`);
         if(STATE.cancelledOrders.length > MAX_CANCELLED) STATE.cancelledOrders.pop();
     }
 
@@ -426,6 +474,8 @@
         const now = Date.now();
         const book = new Map();   // price -> qty, replaced wholesale on each snapshot
         const seen = new Set();   // whale keys present in this snapshot
+        let maxV = 0;
+        const th = wallMin(coin);
         let edge = type === 'bid' ? Infinity : -Infinity; // farthest visible price from the market
 
         for (const [priceStr, qtyStr] of levels) {
@@ -436,13 +486,15 @@
             edge = type === 'bid' ? Math.min(edge, price) : Math.max(edge, price);
 
             const value = price * qty;
-            if(value < WHALE_THRESHOLD) continue;
+            if(value > maxV) maxV = value;
+            if(value < th * 0.7) continue; // 70%..100%: only kept if already tracked (hysteresis, below)
 
             const key = `${coin}-${priceStr}-${type}`;
+            if(value < th && !STATE.activeWhales.has(key)) continue; // a wall hovering near the threshold must not flicker in/out
             seen.add(key);
             const whale = STATE.activeWhales.get(key);
             if(whale) {
-                if(Math.abs(whale.value - value) > (WHALE_THRESHOLD * 0.1)) {
+                if(Math.abs(whale.value - value) > (th * 0.1)) {
                     whale.status = 'مُعدل';
                     whale.value = value;
                     whale.qty = qty;
@@ -450,12 +502,13 @@
             } else {
                 // distance is NOT stored: it is computed against the live price at render time
                 STATE.activeWhales.set(key, { coin, type, price, qty, value, status: 'مستمر', time: now });
-                if(value >= WHALE_THRESHOLD * 3 && now - bootTime > 3000) {
+                if(value >= th * 3 && now - bootTime > 3000) {
                     addAlert(type === 'bid' ? 'buy' : 'sell', `جدار ${type==='bid'?'طلب':'عرض'} ضخم على ${coin.replace('USDT','')} عند ${fmtPrice(price)} بقيمة ${formatCurrency(value)}`);
                 }
             }
         }
 
+        STATE.depthInfo[coin] = Object.assign(STATE.depthInfo[coin] || {}, { t: now, [type]: maxV });
         if(type === 'bid') STATE.bids[coin] = book; else STATE.asks[coin] = book;
 
         // Reconcile: whales that were tracked but are not in this snapshot. Deleted immediately (no timers).
@@ -478,9 +531,9 @@
         STATE.largeTrades.unshift(trade);
         if(STATE.largeTrades.length > MAX_TRADES) STATE.largeTrades.length = MAX_TRADES; 
         
-        addAlert(type, `صفقة ${type==='buy'?'شراء':'بيع'} ماركت لعملة ${coin} بـ ${formatCurrency(value)}`);
+        if(value < MEGA_TRADE) addAlert(type, `صفقة ${type==='buy'?'شراء':'بيع'} ماركت لعملة ${coin} بـ ${formatCurrency(value)}`);
         
-        if(value >= TRADE_THRESHOLD * 2) beep(type);
+        if(value < MEGA_TRADE && value >= tradeMin(coin) * 2) beep(type);
     }
 
     // Alerts System
@@ -561,6 +614,8 @@
 
             // 2. Long & Short Interests (distance is computed live from the current price)
             const currentPrice = STATE.prices[ACTIVE_COIN_FILTER];
+            const di = STATE.depthInfo[ACTIVE_COIN_FILTER];
+            const emptyMsg = side => !di ? 'في انتظار بيانات الدفتر...' : `لا جدران ≥ ${formatCurrency(wallMin(ACTIVE_COIN_FILTER))} (أكبر مستوى ظاهر: ${formatCurrency(di[side] || 0)})`;
             let bidV = 0, askV = 0;
             whalesArray.forEach(w => { if (w.type === 'bid') bidV += w.value; else askV += w.value; });
             const totV = bidV + askV, bidPct = totV > 0 ? (bidV / totV) * 100 : 50;
@@ -591,8 +646,8 @@
                 else shortHtml += rowHtml(w);
             });
 
-            document.getElementById('long-interest-body').innerHTML = longHtml || `<tr><td colspan="6" style="text-align:center">لا يوجد أوامر معلقة حالياً</td></tr>`;
-            document.getElementById('short-interest-body').innerHTML = shortHtml || `<tr><td colspan="6" style="text-align:center">لا يوجد أوامر معلقة حالياً</td></tr>`;
+            document.getElementById('long-interest-body').innerHTML = longHtml || `<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">${emptyMsg('bid')}</td></tr>`;
+            document.getElementById('short-interest-body').innerHTML = shortHtml || `<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">${emptyMsg('ask')}</td></tr>`;
 
             // 3. Trades List
             let tradesHtml = '';
@@ -622,7 +677,14 @@
                 </div>
             `;
         });
-        document.getElementById('alerts-body').innerHTML = html;
+        const pinHtml = STATE.pinned.map(m => `
+            <div class="mega-item ${m.type}">
+                <button class="mega-x" onclick="dismissMega(${m.id})" aria-label="إزالة التنبيه">✕</button>
+                <div class="mega-title">🐋 ${m.type === 'buy' ? 'شراء' : 'بيع'} ماركت ${m.coin.replace('USDT','')}</div>
+                <div class="mega-val">${formatCurrency(m.value)}</div>
+                <div class="alert-time">السعر: ${fmtPrice(m.price)} - الوقت: ${formatTime(m.time)}</div>
+            </div>`).join('');
+        document.getElementById('alerts-body').innerHTML = (pinHtml ? `<div class="pinned">${pinHtml}</div>` : '') + html;
     }
 
     // Boot
