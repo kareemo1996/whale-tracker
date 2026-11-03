@@ -18,41 +18,63 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        
+
         body { background-color: var(--bg-dark); color: var(--text-main); overflow-x: hidden; display: flex; flex-direction: column; height: 100vh; }
 
         /* Navbar */
         .navbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: var(--bg-card); border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px; }
         .logo { font-size: 1.2rem; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 10px; }
         .logo span { color: var(--color-alert); }
-        
+
         .controls { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
         .control-group { display: flex; align-items: center; gap: 5px; }
         select { background-color: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 4px; outline: none; cursor: pointer; }
-        
+
         .status { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
         .dot { width: 10px; height: 10px; border-radius: 50%; background-color: var(--color-buy); box-shadow: 0 0 8px var(--color-buy); animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .dot.offline { background-color: var(--color-sell); box-shadow: 0 0 8px var(--color-sell); animation: none; }
+        .dot.partial { background-color: var(--color-alert); box-shadow: 0 0 8px var(--color-alert); }
 
         /* Layout */
-        .container { padding: 15px; display: flex; flex-direction: column; gap: 15px; flex: 1; min-height: 0; }
-        
+        .container { padding: 15px; display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; }
+
+        /* Exchange status strip */
+        .ex-strip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; }
+        .ex-chip { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--border-color); border-radius: 16px; font-size: .8rem; cursor: pointer; background: rgba(255,255,255,.02); user-select: none; }
+        .ex-chip.off { opacity: .45; }
+        .ex-chip input { accent-color: var(--color-alert); cursor: pointer; }
+        .ex-chip.nofilter { cursor: default; }
+        .sdot { width: 9px; height: 9px; border-radius: 50%; background: var(--color-alert); flex: none; }
+        .sdot.ok { background: var(--color-buy); box-shadow: 0 0 6px var(--color-buy); }
+        .sdot.bad { background: var(--color-sell); box-shadow: 0 0 6px var(--color-sell); }
+        .ex-name { font-weight: bold; }
+        .ex-mk { font-size: .65rem; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 3px; padding: 0 3px; }
+        .ex-meta { color: var(--text-muted); font-size: .72rem; }
+        .ex-warn { color: var(--color-alert); font-size: .72rem; }
+        .src-note { width: 100%; font-size: .75rem; color: var(--text-muted); }
+
         /* Main Grid */
-        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr 300px; gap: 15px; flex: 1; overflow: hidden; min-height: 0; grid-auto-rows: minmax(0, 1fr); }
-        
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1.8fr 300px; gap: 15px; flex: 1; overflow: hidden; min-height: 260px; grid-auto-rows: minmax(0, 1fr); }
+
         .panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; }
         .panel-header { padding: 10px 15px; background: rgba(0,0,0,0.2); border-bottom: 1px solid var(--border-color); font-weight: bold; font-size: 0.95rem; }
-        .panel-content { flex: 1; overflow-y: auto; padding: 5px; }
+        .panel-header small { font-weight: normal; color: var(--text-muted); font-size: .72rem; margin-right: 6px; }
+        .panel-content { flex: 1; overflow: auto; padding: 5px; }
 
         /* Tables inside panels */
         .data-table { width: 100%; border-collapse: collapse; text-align: right; }
-        .data-table th { position: sticky; top: 0; background: var(--bg-card); color: var(--text-muted); font-size: 0.8rem; padding: 8px; border-bottom: 1px solid var(--border-color); z-index: 1; }
+        .data-table th { position: sticky; top: 0; background: var(--bg-card); color: var(--text-muted); font-size: 0.8rem; padding: 8px; border-bottom: 1px solid var(--border-color); z-index: 1; white-space: nowrap; }
         .data-table td { padding: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.02); }
-        
+        .trades-table td { padding: 6px 7px; font-size: .8rem; white-space: nowrap; }
+
         .text-buy { color: var(--color-buy); }
         .text-sell { color: var(--color-sell); }
-        
+
+        .ex-badge { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--c, var(--border-color)); color: var(--c, var(--text-main)); font-weight: bold; font-size: .75rem; }
+        .ex-badge i { font-style: normal; font-weight: normal; font-size: .62rem; opacity: .8; }
+        .live-tag { display: inline-block; padding: 0 6px; border-radius: 8px; background: rgba(240,185,11,.18); color: var(--color-alert); font-size: .68rem; font-weight: bold; animation: pulse 1.2s infinite; }
+
         /* Alerts */
         .alerts-feed { display: flex; flex-direction: column; gap: 5px; padding: 10px; }
         .alert-item { padding: 8px 10px; border-radius: 4px; font-size: 0.8rem; display: flex; flex-direction: column; gap: 5px; border-right: 3px solid; background: rgba(255,255,255,0.02); }
@@ -62,21 +84,29 @@
         .alert-time { font-size: 0.7rem; color: var(--text-muted); }
 
         /* Aggregated Stats Panel */
-        .stats-panel { display: flex; justify-content: space-between; background: var(--bg-card); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
-        .stat-box { text-align: center; flex: 1; }
-        .stat-label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px; }
+        .stats-panel { display: flex; justify-content: space-between; background: var(--bg-card); padding: 12px 15px; border-radius: 8px; border: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px; }
+        .stat-box { text-align: center; flex: 1 1 150px; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
         .stat-value { font-size: 1.2rem; font-weight: bold; }
+        .stat-sub { font-size: .7rem; color: var(--text-muted); margin-top: 2px; direction: ltr; unicode-bidi: embed; }
+
+        .breakdown { display: flex; flex-wrap: wrap; gap: 8px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; align-items: stretch; }
+        .bd-title { width: 100%; font-size: .75rem; color: var(--text-muted); }
+        .bd-card { flex: 1 1 170px; border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; font-size: .78rem; display: flex; flex-direction: column; gap: 3px; }
+        .bd-card.off { opacity: .4; }
+        .bd-row { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; }
+        .bd-bar { height: 4px; border-radius: 2px; background: var(--color-sell); overflow: hidden; }
+        .bd-bar > i { display: block; height: 100%; background: var(--color-buy); }
 
         /* Utilities */
         .disclaimer { font-size: 0.75rem; color: var(--text-muted); text-align: center; padding: 5px; margin-top: auto; }
-        
+
         .btn { background: var(--bg-hover); color: var(--text-main); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: .85rem; }
         .btn:hover, .btn.on { border-color: var(--color-alert); }
         .btn.on { color: var(--color-alert); }
         :focus-visible { outline: 2px solid var(--color-alert); outline-offset: 2px; }
         .price { font-weight: bold; font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: embed; }
         .data-table td { font-variant-numeric: tabular-nums; }
-        .stats-panel { flex-wrap: wrap; gap: 10px; }
         .imb-bar { height: 6px; border-radius: 3px; background: var(--color-sell); overflow: hidden; margin: 6px auto 0; max-width: 200px; }
         .imb-bar > i { display: block; height: 100%; width: 50%; background: var(--color-buy); transition: width .3s; }
 
@@ -90,14 +120,14 @@
         .mega-toast { position: fixed; top: 16px; left: 50%; transform: translate(-50%, -200%); z-index: 100; padding: 16px 28px; border-radius: 10px; color: #fff; font-size: 1.15rem; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 8px 32px rgba(0,0,0,.6); transition: transform .35s; cursor: pointer; max-width: 92vw; text-align: center; }
         .mega-toast.show { transform: translate(-50%, 0); }
         .mega-toast.buy { background: #0a8f5c; } .mega-toast.sell { background: #c6283d; }
-        @media (prefers-reduced-motion: reduce) { .mega-toast { transition: none; } }
+        @media (prefers-reduced-motion: reduce) { .mega-toast { transition: none; } .live-tag, .dot { animation: none; } }
 
         /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: var(--bg-dark); }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
 
-        @media (max-width: 1200px) { .grid { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 1200px) { .grid { grid-template-columns: 1fr 1fr; } .panel-wide { grid-column: 1 / -1; } }
         @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } body { height: auto; min-height: 100vh; } .container { flex: none; } .grid { grid-auto-rows: 400px; } .panel { height: 400px; } .stats-panel { flex-direction: column; gap: 10px; } }
     </style>
 </head>
@@ -117,7 +147,7 @@
                     <option value="DOGEUSDT">DOGE</option>
                 </select>
             </div>
-            
+
             <div class="control-group">
                 <label style="font-size: 0.85rem; color: var(--text-muted);">حد الجدران:</label>
                 <select id="whale-threshold" onchange="updateSettings()">
@@ -143,10 +173,18 @@
                     <option value="86400000">1 يوم</option>
                 </select>
             </div>
-            
+
             <div class="control-group">
                 <label style="font-size: 0.85rem; color: var(--text-muted);">حد الصفقات:</label>
                 <select id="trade-threshold" onchange="updateSettings()"></select>
+            </div>
+            <div class="control-group">
+                <label style="font-size: 0.85rem; color: var(--text-muted);" for="agg-filter">تجميع الصفقات:</label>
+                <select id="agg-filter" onchange="updateAgg()">
+                    <option value="0">بدون تجميع</option>
+                    <option value="1000" selected>ثانية</option>
+                    <option value="2000">ثانيتان</option>
+                </select>
             </div>
             <div class="control-group">
                 <button class="btn" id="btn-sound" onclick="toggleSound()">🔕 الصوت</button>
@@ -163,32 +201,46 @@
     </nav>
 
     <div class="container">
-        
+
+        <div class="ex-strip" id="ex-strip" aria-label="حالة المنصات"></div>
+
         <div class="stats-panel">
             <div class="stat-box">
-                <div class="stat-label">إجمالي شراء ماركت (Market Buy) للمفلتر</div>
+                <div class="stat-label">شراء ماركت (كل المنصات المفعّلة)</div>
                 <div class="stat-value text-buy" id="total-filtered-long">$0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">إجمالي بيع ماركت (Market Sell) للمفلتر</div>
+                <div class="stat-label">بيع ماركت (كل المنصات المفعّلة)</div>
                 <div class="stat-value text-sell" id="total-filtered-short">$0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">الفرق (CVD Delta)</div>
+                <div class="stat-label">CVD المجمّع (آجل + فوري)</div>
                 <div class="stat-value" id="filtered-delta">$0</div>
             </div>
             <div class="stat-box">
-                <div class="stat-label">توازن الجدران المعلقة (طلب / عرض)</div>
+                <div class="stat-label">CVD العقود الآجلة فقط</div>
+                <div class="stat-value" id="cvd-fut">$0</div>
+                <div class="stat-sub" id="cvd-fut-sub">—</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">CVD السوق الفوري (Spot) فقط</div>
+                <div class="stat-value" id="cvd-spot">$0</div>
+                <div class="stat-sub" id="cvd-spot-sub">—</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">توازن الجدران المعلقة (Binance) طلب / عرض</div>
                 <div class="stat-value" id="imb-text">—</div>
                 <div class="imb-bar"><i id="imb-fill"></i></div>
             </div>
         </div>
 
+        <div class="breakdown" id="breakdown"></div>
+
         <!-- Main Grid -->
         <div class="grid">
             <!-- Long Interest -->
             <div class="panel">
-                <div class="panel-header text-buy">🟢 أوامر الشراء المعلقة (Long Interest)</div>
+                <div class="panel-header text-buy">🟢 أوامر الشراء المعلقة (Long Interest) <small>Binance Futures فقط</small></div>
                 <div class="panel-content">
                     <table class="data-table">
                         <thead><tr><th>العملة</th><th>السعر</th><th>القيمة ($)</th><th>البُعد</th><th>المدة</th><th>الحالة</th></tr></thead>
@@ -199,7 +251,7 @@
 
             <!-- Short Interest -->
             <div class="panel">
-                <div class="panel-header text-sell">🔴 أوامر البيع المعلقة (Short Interest)</div>
+                <div class="panel-header text-sell">🔴 أوامر البيع المعلقة (Short Interest) <small>Binance Futures فقط</small></div>
                 <div class="panel-content">
                     <table class="data-table">
                         <thead><tr><th>العملة</th><th>السعر</th><th>القيمة ($)</th><th>البُعد</th><th>المدة</th><th>الحالة</th></tr></thead>
@@ -209,11 +261,11 @@
             </div>
 
             <!-- Executed Trades -->
-            <div class="panel">
-                <div class="panel-header">⚡ صفقات ماركت منفذة (Large Trades)</div>
+            <div class="panel panel-wide">
+                <div class="panel-header">⚡ صفقات ماركت منفذة مجمّعة (Large Trades) <small>من عدة منصات</small></div>
                 <div class="panel-content">
-                    <table class="data-table">
-                        <thead><tr><th>الوقت</th><th>العملة</th><th>النوع</th><th>القيمة ($)</th></tr></thead>
+                    <table class="data-table trades-table">
+                        <thead><tr><th>الوقت</th><th>المنصة</th><th>العملة</th><th>النوع</th><th>السعر (م. مرجّح)</th><th>النطاق السعري</th><th>التنفيذات</th><th>القيمة ($)</th></tr></thead>
                         <tbody id="trades-body"></tbody>
                     </table>
                 </div>
@@ -229,29 +281,77 @@
         </div>
 
         <div class="disclaimer">
-            تنويه: أوامر الشراء والبيع تمثل مناطق السيولة (Limit Orders) ولا تعني الدخول الفعلي. اعتمد على "صفقات ماركت منفذة" و "الفرق CVD Delta" لتحديد اتجاه التنفيذ الفعلي للحيتان. بيع الماركت قد يكون إغلاقاً لصفقة Long وليس بالضرورة فتح Short، وشراء الماركت قد يكون إغلاقاً لصفقة Short.
+            تنويه: الجدران المعلقة (Limit Orders) من دفتر Binance Futures فقط، أما الصفقات المنفذة فمن عدة منصات (Binance وBybit وOKX وGate.io عقود آجلة، وCoinbase سوق فوري). الجدران تمثل مناطق سيولة ولا تعني الدخول الفعلي. اعتمد على "صفقات ماركت منفذة" و"CVD" لتحديد اتجاه التنفيذ الفعلي للحيتان، وافصل دائماً بين الآجل والفوري. بيع الماركت قد يكون إغلاقاً لصفقة Long وليس بالضرورة فتح Short، وشراء الماركت قد يكون إغلاقاً لصفقة Short.
         </div>
     </div>
 
 <script>
-    // Configuration & State
+    // =====================================================================
+    //  CONFIGURATION TABLES  (edit here if an exchange changes something)
+    // =====================================================================
     const COINS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'DOGEUSDT'];
+
+    const EXCHANGES = {
+        binance:  { name: 'Binance',  market: 'futures', color: '#f0b90b' },
+        bybit:    { name: 'Bybit',    market: 'futures', color: '#ff7a45' },
+        okx:      { name: 'OKX',      market: 'futures', color: '#c9ced6' },
+        gate:     { name: 'Gate.io',  market: 'futures', color: '#35c3ff' },
+        coinbase: { name: 'Coinbase', market: 'spot',    color: '#6d8bff' }
+    };
+    const EX_ORDER = Object.keys(EXCHANGES);
+
+    // WebSocket endpoints (read from each exchange's official docs; see delivery notes)
+    const WS_DEPTH_URL  = 'wss://fstream.binance.com/public/stream';   // Binance: depth lives on /public
+    const WS_TRADES_URL = 'wss://fstream.binance.com/market/stream';   // Binance: aggTrade lives on /market
+    const WS_BYBIT_URL  = 'wss://stream.bybit.com/v5/public/linear';   // Bybit USDT perpetual (linear)
+    const WS_OKX_URL    = 'wss://ws.okx.com/ws/v5/public';             // OKX public (older docs: wss://ws.okx.com:8443/ws/v5/public)
+    const WS_GATE_URL   = 'wss://fx-ws.gateio.ws/v4/ws/usdt';          // Gate USDT-settled futures
+    const WS_CB_URL     = 'wss://advanced-trade-ws.coinbase.com';      // Coinbase Advanced Trade market data (no JWT needed, beta)
+    const DEPTH_LEVELS  = 20; // futures partial-book depth supports 5 / 10 / 20 only
+
+    const OKX_TRADES_CHANNEL = 'trades'; // 'trades' = public endpoint (aggregated per taker order). 'trades-all' lives on the /business endpoint.
+
+    // Coinbase docs: market_trades "side" refers to the MAKER's side. We invert it to get the taker (aggressor) side.
+    // If a live comparison shows the opposite, flip this single flag.
+    const COINBASE_SIDE_IS_MAKER = true;
+
+    // Symbol mapping per exchange. null = coin not listed there (silently ignored, shown in the status chip).
+    const SYM = {
+        bybit:    c => c,                                       // BTCUSDT
+        okx:      c => c.replace('USDT', '') + '-USDT-SWAP',    // BTC-USDT-SWAP
+        gate:     c => c.replace('USDT', '') + '_USDT',         // BTC_USDT
+        coinbase: c => c === 'BNBUSDT' ? null : c.replace('USDT', '') + '-USD' // BNB: not listed here by default (edit if that changes)
+    };
+    const REV = {}; // exchange symbol -> internal coin
+    Object.keys(SYM).forEach(ex => { REV[ex] = {}; COINS.forEach(c => { const s = SYM[ex](c); if (s) REV[ex][s] = c; }); });
+
+    // Contract sizes: base-coin amount per ONE contract. These are FALLBACK values (unverified, from memory).
+    // The page tries to fetch the live values from each exchange's public instruments endpoint; if CORS/network blocks it,
+    // these numbers are used and a visible warning is shown on the exchange chip. A wrong value inflates/deflates numbers 10-100x.
+    const CONTRACT_FALLBACK = {
+        okx:  { BTCUSDT: 0.01,   ETHUSDT: 0.1,  BNBUSDT: 0.01, SOLUSDT: 1, DOGEUSDT: 1000 }, // OKX ctVal
+        gate: { BTCUSDT: 0.0001, ETHUSDT: 0.01, BNBUSDT: 0.01, SOLUSDT: 1, DOGEUSDT: 10 }    // Gate quanto_multiplier
+    };
+    const CONTRACT_REFRESH_MS = 600000;
+
     const $ = id => document.getElementById(id);
     const store = {
         get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
         set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
     };
     $('trade-threshold').innerHTML = $('whale-threshold').innerHTML;
-    [['whale-threshold', 'whaleThreshold'], ['trade-threshold', 'tradeThreshold'], ['coin-filter', 'coin'], ['timeframe-filter', 'timeframe']].forEach(([id, key]) => {
+    [['whale-threshold', 'whaleThreshold'], ['trade-threshold', 'tradeThreshold'], ['coin-filter', 'coin'], ['timeframe-filter', 'timeframe'], ['agg-filter', 'agg']].forEach(([id, key]) => {
         const el = $(id), v = store.get(key, null);
         if (v !== null && [...el.options].some(o => o.value === v)) el.value = v; // ignore stale/invalid saved values
     });
     let WHALE_THRESHOLD = parseInt($('whale-threshold').value);
     let TRADE_THRESHOLD = parseInt($('trade-threshold').value);
+    let AGG_MS = parseInt($('agg-filter').value) || 0;
     let SOUND_ON = store.get('sound', '0') === '1';
     let PAUSED = false;
     const MAX_TRADES = 5000;
-    const MEGA_TRADE = 3000000; // single trades at/above this get a pinned alert + big toast, regardless of the trade-size filter
+    const GROUP_MAX_AGE_MS = 5000;      // an aggregation group never stays open longer than this
+    const MEGA_TRADE = 3000000;         // aggregated value at/above this gets a pinned alert + big toast (once per group)
     // BNB's futures book is thin (20 levels span only ~$0.20), so the same $ threshold almost never triggers there.
     const COIN_SCALE = { BNBUSDT: 0.25 };
     const wallMin = c => WHALE_THRESHOLD * (COIN_SCALE[c] || 1);
@@ -259,29 +359,46 @@
     let ACTIVE_COIN_FILTER = $('coin-filter').value;
     let TIMEFRAME_FILTER = 900000; // set from the select by updateFilters()
 
-    
+    // Exchange on/off filter (affects numbers + table; persisted)
+    const EX_ON = {};
+    (function () {
+        let saved = {};
+        try { saved = JSON.parse(store.get('exOn', '{}')) || {}; } catch (e) {}
+        EX_ORDER.forEach(ex => { EX_ON[ex] = saved[ex] !== false; });
+    })();
 
     const STATE = {
-        prices: {},
+        prices: {},          // reference price per coin (Binance aggTrade)
         bids: {},
         asks: {},
         activeWhales: new Map(), // key: "COIN-PRICE-TYPE", value: { ...details }
-        largeTrades: [],
-        cancelledOrders: [], // fixed-size ring of recently vanished whale orders (no timers)
-        alerts: []
+        largeTrades: [],         // aggregated trade groups that passed the trade threshold (newest first)
+        cancelledOrders: [],     // fixed-size ring of recently vanished whale orders (no timers)
+        alerts: [],
+        exPrice: {},         // exchange -> coin -> {p, t}
+        ex: {}               // connector status objects
     };
 
     STATE.depthInfo = {}; // per coin: last update + largest visible level per side (diagnostics for empty tables)
-    STATE.pinned = [];    // mega trades, stay until dismissed
+    STATE.pinned = [];    // mega groups, stay until dismissed
     const MAX_CANCELLED = 60;            // hard cap for cancelledOrders
     const CANCELLED_VISIBLE_MS = 30000;  // how long a vanished order stays visible (filtered at render time)
 
-    // Initialize state structures
     COINS.forEach(coin => {
         STATE.prices[coin] = 0;
         STATE.bids[coin] = new Map();
         STATE.asks[coin] = new Map();
     });
+    EX_ORDER.forEach(ex => { STATE.exPrice[ex] = {}; });
+
+    // Contract sizes at runtime
+    const CONTRACT = { okx: {}, gate: {} };
+    Object.keys(CONTRACT).forEach(ex => COINS.forEach(c => { CONTRACT[ex][c] = { v: CONTRACT_FALLBACK[ex][c], src: 'fallback' }; }));
+    const contractSize = (ex, coin) => (CONTRACT[ex] && CONTRACT[ex][coin]) ? CONTRACT[ex][coin].v : 1;
+
+    // Raw (pre-aggregation) notional per exchange/coin, used only for the contract-size sanity check
+    let VOL = { start: Date.now(), v: {} };
+    EX_ORDER.forEach(ex => { VOL.v[ex] = {}; });
 
     // Filters Update
     function updateFilters() {
@@ -290,6 +407,19 @@
         const tfVal = document.getElementById('timeframe-filter').value;
         TIMEFRAME_FILTER = tfVal === 'ALL' ? 'ALL' : parseInt(tfVal);
         store.set('timeframe', tfVal);
+        renderUI();
+    }
+
+    function updateAgg() {
+        AGG_MS = parseInt($('agg-filter').value) || 0;
+        store.set('agg', AGG_MS);
+        sweepGroups();
+        renderUI();
+    }
+
+    function toggleEx(id, on) {
+        EX_ON[id] = !!on;
+        store.set('exOn', JSON.stringify(EX_ON));
         renderUI();
     }
 
@@ -327,10 +457,14 @@
     }
     function toggleSound() { SOUND_ON = !SOUND_ON; store.set('sound', SOUND_ON ? '1' : '0'); syncButtons(); if (SOUND_ON) { beep('buy'); try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} } }
     function togglePause() { PAUSED = !PAUSED; syncButtons(); if (!PAUSED) renderUI(); } // pauses the display only; data keeps flowing
-    function clearData() { STATE.largeTrades.length = 0; STATE.cancelledOrders.length = 0; STATE.alerts.length = 0; STATE.pinned.length = 0; alertsDirty = true; renderUI(); }
+    function clearData() {
+        STATE.largeTrades.length = 0; STATE.cancelledOrders.length = 0; STATE.alerts.length = 0; STATE.pinned.length = 0;
+        openGroups.forEach(g => { g.tracked = false; }); // open groups may re-enter the list when they next update
+        alertsDirty = true; renderUI();
+    }
     function exportCSV() {
-        const rows = ['time,coin,side,price,value_usd'].concat(STATE.largeTrades.map(t =>
-            [new Date(t.time).toISOString(), t.coin, t.type, t.price, t.value.toFixed(2)].join(',')));
+        const rows = ['time,exchange,market,coin,side,avg_price,price_from,price_to,executions,value_usd,status'].concat(STATE.largeTrades.map(t =>
+            [new Date(t.lastT).toISOString(), t.exchange, t.market, t.coin, t.side, t.price, t.minP, t.maxP, t.n, t.value.toFixed(2), t.open ? 'open' : 'closed'].join(',')));
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv' }));
         a.download = `whale-trades-${Date.now()}.csv`;
@@ -349,14 +483,19 @@
             });
         } catch (e) {}
     }
+    const coinName = c => c.replace('USDT', '');
+    const exLabel = g => EXCHANGES[g.exchange].name;
+
+    // Mega alert: fired ONCE per aggregation group (g.mega flag). The pinned card keeps a reference to the group,
+    // so it keeps showing the live value while the group grows instead of adding more cards.
     let megaId = 0, toastTimer = null;
-    function processMega(coin, price, value, type) {
-        STATE.pinned.unshift({ id: ++megaId, coin, price, value, type, time: Date.now() });
+    function processMega(g) {
+        STATE.pinned.unshift({ id: ++megaId, g });
         if (STATE.pinned.length > 8) STATE.pinned.length = 8;
         alertsDirty = true;
-        const label = `${type === 'buy' ? 'شراء' : 'بيع'} ماركت ${coin.replace('USDT','')} بقيمة ${formatCurrency(value)} عند ${fmtPrice(price)}`;
+        const label = `${g.side === 'buy' ? 'شراء' : 'بيع'} ماركت ${coinName(g.coin)} على ${exLabel(g)} بقيمة ${formatCurrency(g.value)} عند ${fmtPrice(g.price)}`;
         const t = $('mega-toast');
-        t.className = 'mega-toast show ' + type;
+        t.className = 'mega-toast show ' + g.side;
         t.innerHTML = `<b>🐋 صفقة ضخمة!</b><span>${label}</span>`;
         clearTimeout(toastTimer);
         toastTimer = setTimeout(() => t.classList.remove('show'), 10000);
@@ -365,112 +504,258 @@
     }
     function dismissMega(id) { STATE.pinned = STATE.pinned.filter(m => m.id !== id); alertsDirty = true; renderUI(); }
 
-    // WebSockets (Split for Stability)
-    // Binance USD-M futures now routes streams by category: partial depth lives on /public,
-    // aggTrade (and other market streams) on /market. Change these two constants if Binance moves them again.
-    const WS_DEPTH_URL  = 'wss://fstream.binance.com/public/stream';
-    const WS_TRADES_URL = 'wss://fstream.binance.com/market/stream';
-    const DEPTH_LEVELS  = 20; // futures partial-book depth supports 5 / 10 / 20 only
+    // =====================================================================
+    //  GENERIC CONNECTOR  (one independent socket + reconnect + heartbeat + watchdog per source)
+    // =====================================================================
+    let bootTime = Date.now();
+    const SILENCE_MS = 15000;
+    const connectors = {};
 
-    let wsDepth, wsTrades, reconnectTimer = null;
-    let retries = 0, lastMsg = Date.now(), bootTime = Date.now();
-    const sockOpen = { depth: false, trades: false };
+    function safeParse(raw) { try { return JSON.parse(raw); } catch (e) { return null; } }
 
-    function setOffline() {
-        document.getElementById('ws-dot').classList.add('offline');
-        document.getElementById('ws-text').innerText = 'جاري إعادة الاتصال...';
-        document.getElementById('ws-text').style.color = 'var(--color-sell)';
+    function makeConnector(id, cfg) {
+        const st = STATE.ex[id] = {
+            id, state: 'connecting', lastMsg: 0, started: Date.now(), fails: 0, retryAt: 0,
+            reason: '', unsupported: cfg.unsupported || [], warns: {}, errors: 0, everOpen: false
+        };
+        let ws = null, retryTimer = null, pingTimer = null, wdTimer = null, gotData = false, gotOpen = false;
+
+        function detach(s) { if (s) { s.onopen = s.onmessage = s.onclose = s.onerror = null; try { s.close(); } catch (e) {} } }
+        function stopTimers() { clearTimeout(retryTimer); clearInterval(pingTimer); pingTimer = null; }
+
+        function scheduleRetry(why) {
+            stopTimers();
+            st.fails++;
+            if (why) st.reason = why;
+            st.state = st.fails >= 3 ? 'down' : 'retry';
+            const delay = Math.min(30000, 1500 * 2 ** (st.fails - 1)); // 1.5s, 3s, 6s ... max 30s (independent per source)
+            st.retryAt = Date.now() + delay;
+            retryTimer = setTimeout(connect, delay);
+        }
+
+        function forceReconnect(why) {
+            detach(ws); ws = null;
+            scheduleRetry(why);
+        }
+
+        function connect() {
+            stopTimers();
+            detach(ws); ws = null;
+            gotData = false; gotOpen = false;
+            st.state = 'connecting'; st.started = Date.now(); st.lastMsg = Date.now();
+            try { if (cfg.beforeConnect) cfg.beforeConnect(); } catch (e) {}
+            let sock;
+            try { sock = new WebSocket(cfg.url()); } catch (e) { scheduleRetry('فشل إنشاء الاتصال'); return; }
+            ws = sock;
+            sock.onopen = () => {
+                if (sock !== ws) return;
+                gotOpen = true; st.everOpen = true; st.state = 'open'; st.lastMsg = Date.now();
+                try { if (cfg.onOpen) cfg.onOpen(sock, st); } catch (e) { st.errors++; }
+                if (cfg.ping && cfg.pingMs) {
+                    pingTimer = setInterval(() => { try { if (sock.readyState === 1) cfg.ping(sock); } catch (e) {} }, cfg.pingMs);
+                }
+            };
+            sock.onmessage = (ev) => {
+                if (sock !== ws) return;
+                st.lastMsg = Date.now();
+                if (!gotData) { gotData = true; st.fails = 0; st.reason = st.reason && /^فشل الاشتراك/.test(st.reason) ? st.reason : ''; } // backoff resets only after real data arrives
+                if (typeof ev.data !== 'string') return;
+                try { cfg.handle(ev.data, st); } catch (e) { st.errors++; } // never let one bad message kill the stream
+            };
+            sock.onerror = () => { /* the close event follows and carries the details */ };
+            sock.onclose = (ev) => {
+                if (sock !== ws) return;
+                ws = null;
+                scheduleRetry(gotOpen ? `انقطع الاتصال (code ${ev && ev.code})` : `تعذر الاتصال (قد يكون حجباً جغرافياً أو مشكلة شبكة، code ${ev && ev.code})`);
+            };
+        }
+
+        // Watchdog: no inbound message (data, pong or heartbeat) for 15s -> reconnect; a connect attempt hanging >15s too.
+        wdTimer = setInterval(() => {
+            const now = Date.now();
+            if (st.state === 'open' && now - st.lastMsg > SILENCE_MS) forceReconnect('صمت أكثر من 15 ثانية');
+            else if (st.state === 'connecting' && now - st.started > SILENCE_MS) forceReconnect('انتهت مهلة الاتصال');
+        }, 5000);
+
+        return { id, st, connect, forceReconnect };
     }
 
-    function setOnline() {
-        document.getElementById('ws-dot').classList.remove('offline');
-        document.getElementById('ws-text').innerText = 'متصل';
-        document.getElementById('ws-text').style.color = 'var(--color-buy)';
-    }
-
-    // One pending reconnect at most; whichever socket dies first triggers a clean restart of both.
-    function scheduleReconnect() {
-        if (reconnectTimer) return;
-        setOffline();
-        const delay = Math.min(30000, 1500 * 2 ** retries++); // exponential backoff: 1.5s, 3s, 6s ... max 30s
-        reconnectTimer = setTimeout(() => { reconnectTimer = null; connectWS(); }, delay);
-    }
-
-    function connectWS() {
-        // Detach handlers first so closing the old sockets cannot schedule yet another reconnect.
-        [wsDepth, wsTrades].forEach(ws => {
-            if (ws) { ws.onclose = null; ws.onmessage = null; ws.onopen = null; ws.onerror = null; ws.close(); }
+    // =====================================================================
+    //  NORMALIZATION  ->  { exchange, market, coin, price, valueUSD, side, time }  (+ qty, n)
+    // =====================================================================
+    function pushTrade(t) {
+        if (!COINS.includes(t.coin) || !EXCHANGES[t.exchange]) return;
+        if (!(t.price > 0) || !(t.qty > 0) || !isFinite(t.price) || !isFinite(t.qty)) return;
+        if (t.side !== 'buy' && t.side !== 'sell') return; // unknown direction: drop rather than guess
+        ingestTrade({
+            exchange: t.exchange, market: EXCHANGES[t.exchange].market, coin: t.coin,
+            price: t.price, qty: t.qty, valueUSD: t.price * t.qty,   // USDT treated as USD
+            side: t.side, time: t.time || Date.now(), n: t.n || 1
         });
+    }
 
-        // Stale books from the old connection must not be mistaken for cancellations on the first new snapshot.
-        STATE.activeWhales.clear();
-        COINS.forEach(c => { STATE.bids[c] = new Map(); STATE.asks[c] = new Map(); });
-        bootTime = Date.now(); lastMsg = Date.now();
-        const depthStreams = COINS.map(c => `${c.toLowerCase()}@depth${DEPTH_LEVELS}@100ms`).join('/');
-        const tradeStreams = COINS.map(c => `${c.toLowerCase()}@aggTrade`).join('/');
+    // Binance aggTrade: m = isBuyerMaker. m:true -> aggressor SOLD; m:false -> aggressor BOUGHT.
+    function handleBinanceTrade(raw) {
+        const p = safeParse(raw);
+        if (!p || !p.data) return;
+        const d = p.data;
+        const n = (d.l >= d.f) ? (d.l - d.f + 1) : 1;
+        pushTrade({ exchange: 'binance', coin: d.s, price: parseFloat(d.p), qty: parseFloat(d.q), side: d.m ? 'sell' : 'buy', n });
+    }
 
-        // WS 1: Order book. depthN streams push the FULL top-N levels every time (snapshots, not deltas).
-        wsDepth = new WebSocket(`${WS_DEPTH_URL}?streams=${depthStreams}`);
-
-        // WS 2: Aggregated trades (also our live price source, so no separate ticker stream is needed).
-        wsTrades = new WebSocket(`${WS_TRADES_URL}?streams=${tradeStreams}`);
-
-        sockOpen.depth = sockOpen.trades = false;
-        // "Connected" only when BOTH sockets are open.
-        const onOpen = k => () => { sockOpen[k] = true; lastMsg = Date.now(); if (sockOpen.depth && sockOpen.trades) { retries = 0; setOnline(); } };
-        wsDepth.onopen = onOpen('depth');
-        wsTrades.onopen = onOpen('trades');
-        wsDepth.onclose = scheduleReconnect;
-        wsDepth.onerror = () => { try { wsDepth.close(); } catch (e) {} };
-        wsTrades.onclose = scheduleReconnect;
-        wsTrades.onerror = () => { try { wsTrades.close(); } catch (e) {} };
-
-        // Process Depth snapshots
-        wsDepth.onmessage = (event) => {
-            lastMsg = Date.now();
-            const payload = JSON.parse(event.data);
-            if(!payload.data || !payload.stream) return;
-            const coin = payload.stream.split('@')[0].toUpperCase(); // "btcusdt@depth20@100ms" -> BTCUSDT
-            if(!STATE.bids[coin]) return;
-            processOrderBook(coin, payload.data.b || [], 'bid');
-            processOrderBook(coin, payload.data.a || [], 'ask');
-        };
-
-        // Process Trades ONLY
-        wsTrades.onmessage = (event) => {
-            lastMsg = Date.now();
-            const payload = JSON.parse(event.data);
-            if(!payload.data) return;
-            const data = payload.data;
-
-            const coin = data.s;
-            const price = parseFloat(data.p);
-            const qty = parseFloat(data.q);
-            // m = isBuyerMaker. m:true  -> the resting order was the buyer, the aggressor SOLD (Market Sell).
-            //                   m:false -> the aggressor BOUGHT (Market Buy).
-            // This is execution direction only; it does not say whether the trader opens or closes a position.
-            const isBuyerMaker = data.m;
-            const value = price * qty;
-
-            if(STATE.prices[coin] !== undefined) STATE.prices[coin] = price; // always-fresh reference price
-
-            if(value >= MEGA_TRADE) processMega(coin, price, value, isBuyerMaker ? 'sell' : 'buy');
-            if(value >= tradeMin(coin)) {
-                processLargeTrade(coin, price, value, isBuyerMaker ? 'sell' : 'buy');
+    // Bybit publicTrade: S = taker side ("Buy"/"Sell") per the docs; v = size (base coin for USDT linear; unit not stated on the doc page).
+    function handleBybit(raw, st) {
+        const m = safeParse(raw);
+        if (!m) return;
+        if (m.op === 'subscribe') { if (m.success === false) st.reason = 'فشل الاشتراك: ' + String(m.ret_msg || '').slice(0, 80); return; }
+        if (m.ret_msg === 'pong' || m.op === 'pong') return;
+        if (typeof m.topic === 'string' && m.topic.indexOf('publicTrade.') === 0 && Array.isArray(m.data)) {
+            for (const d of m.data) {
+                const coin = REV.bybit[d.s];
+                if (!coin) continue;
+                pushTrade({ exchange: 'bybit', coin, price: parseFloat(d.p), qty: parseFloat(d.v), side: d.S === 'Buy' ? 'buy' : d.S === 'Sell' ? 'sell' : null });
             }
-        };
+        }
+    }
+
+    // OKX trades: side = taker side; sz = number of CONTRACTS for SWAP -> multiply by contract value. count = matches aggregated in the push.
+    function handleOkx(raw, st) {
+        if (raw === 'pong') return;
+        const m = safeParse(raw);
+        if (!m) return;
+        if (m.event === 'error') { st.reason = 'فشل الاشتراك: ' + String(m.msg || m.code || '').slice(0, 80); return; }
+        if (m.event) return;
+        if (m.arg && m.arg.channel === OKX_TRADES_CHANNEL && Array.isArray(m.data)) {
+            for (const d of m.data) {
+                const coin = REV.okx[d.instId];
+                if (!coin) continue;
+                pushTrade({ exchange: 'okx', coin, price: parseFloat(d.px), qty: parseFloat(d.sz) * contractSize('okx', coin),
+                            side: d.side === 'buy' ? 'buy' : d.side === 'sell' ? 'sell' : null, n: parseInt(d.count) || 1 });
+            }
+        }
+    }
+
+    // Gate futures.trades: size > 0 -> taker is the buyer, size < 0 -> taker is the seller (per docs). size is in CONTRACTS.
+    // Browsers cannot send the X-Gate-Size-Decimal header, so size arrives as an integer truncated toward zero (documented by Gate).
+    function handleGate(raw, st) {
+        const m = safeParse(raw);
+        if (!m) return;
+        if (m.channel === 'futures.pong') return;
+        if (m.event === 'subscribe') { if (m.error) st.reason = 'فشل الاشتراك: ' + String((m.error && m.error.message) || '').slice(0, 80); return; }
+        if (m.channel === 'futures.trades' && m.event === 'update' && Array.isArray(m.result)) {
+            for (const d of m.result) {
+                if (d.is_internal) continue; // liquidation takeovers: may deviate from market price
+                const coin = REV.gate[d.contract];
+                if (!coin) continue;
+                const size = Number(d.size);
+                if (!size) continue;
+                pushTrade({ exchange: 'gate', coin, price: parseFloat(d.price), qty: Math.abs(size) * contractSize('gate', coin), side: size > 0 ? 'buy' : 'sell' });
+            }
+        }
+    }
+
+    // Coinbase market_trades: "side" is the MAKER's side -> taker side is the opposite. Only "update" events are used:
+    // the "snapshot" event delivers history on (re)subscribe and would pollute the CVD with old trades.
+    function handleCoinbase(raw, st) {
+        const m = safeParse(raw);
+        if (!m) return;
+        if (m.type === 'error') { st.reason = 'فشل الاشتراك: ' + String(m.message || '').slice(0, 80); return; }
+        if (m.channel === 'market_trades' && Array.isArray(m.events)) {
+            for (const ev of m.events) {
+                if (ev.type !== 'update' || !Array.isArray(ev.trades)) continue;
+                for (const d of ev.trades) {
+                    const coin = REV.coinbase[d.product_id];
+                    if (!coin) continue;
+                    let side = d.side === 'BUY' ? 'buy' : d.side === 'SELL' ? 'sell' : null;
+                    if (side && COINBASE_SIDE_IS_MAKER) side = side === 'buy' ? 'sell' : 'buy';
+                    pushTrade({ exchange: 'coinbase', coin, price: parseFloat(d.price), qty: parseFloat(d.size), side });
+                }
+            }
+        }
+    }
+
+    // =====================================================================
+    //  TRADE AGGREGATION  (per exchange + coin + side)
+    // =====================================================================
+    const openGroups = new Map(); // key "exchange|coin|side" -> open group
+    let groupSeq = 0;
+
+    function ingestTrade(t) {
+        const now = t.time;
+        STATE.exPrice[t.exchange][t.coin] = { p: t.price, t: now };
+        if (t.exchange === 'binance') STATE.prices[t.coin] = t.price; // always-fresh reference price
+        const vx = VOL.v[t.exchange]; vx[t.coin] = (vx[t.coin] || 0) + t.valueUSD;
+        aggregate(t);
+    }
+
+    function aggregate(t) {
+        const key = t.exchange + '|' + t.coin + '|' + t.side;
+        let g = openGroups.get(key);
+        if (g && (t.time - g.lastT > AGG_MS || t.time - g.startT > GROUP_MAX_AGE_MS)) { closeGroup(key, g); g = null; }
+        if (!g) {
+            g = { id: ++groupSeq, exchange: t.exchange, market: t.market, coin: t.coin, side: t.side,
+                  startT: t.time, lastT: t.time, n: 0, value: 0, qty: 0, price: t.price, minP: Infinity, maxP: -Infinity,
+                  open: true, tracked: false, alerted: false, beeped: false, mega: false };
+            openGroups.set(key, g);
+        }
+        g.n += t.n; g.value += t.valueUSD; g.qty += t.qty; g.lastT = t.time;
+        if (t.price < g.minP) g.minP = t.price;
+        if (t.price > g.maxP) g.maxP = t.price;
+        g.price = g.value / g.qty; // volume-weighted average price
+
+        // Thresholds apply to the AGGREGATED value, not to a single execution.
+        const th = tradeMin(g.coin);
+        if (!g.tracked && g.value >= th) {
+            g.tracked = true;
+            STATE.largeTrades.unshift(g);
+            if (STATE.largeTrades.length > MAX_TRADES) STATE.largeTrades.length = MAX_TRADES;
+        }
+        if (g.tracked && !g.alerted) {
+            g.alerted = true; // one alert per group, never repeated while it grows
+            if (g.value < MEGA_TRADE) addAlert(g.side, `صفقة ${g.side === 'buy' ? 'شراء' : 'بيع'} ماركت لعملة ${coinName(g.coin)} على ${exLabel(g)} بـ ${formatCurrency(g.value)}`);
+        }
+        if (g.tracked && !g.beeped && g.value < MEGA_TRADE && g.value >= th * 2) { g.beeped = true; beep(g.side); }
+        if (!g.mega && g.value >= MEGA_TRADE) { g.mega = true; processMega(g); }
+
+        if (AGG_MS <= 0) closeGroup(key, g); // "no aggregation": every execution is its own row
+    }
+
+    function closeGroup(key, g) {
+        g.open = false;
+        if (openGroups.get(key) === g) openGroups.delete(key);
+        alertsDirty = true;
+    }
+
+    // Periodic sweep (every 250ms): close groups whose gap exceeded X or whose age passed the cap.
+    function sweepGroups(now) {
+        now = now || Date.now();
+        for (const [key, g] of openGroups) {
+            if (now - g.lastT > AGG_MS || now - g.startT > GROUP_MAX_AGE_MS) closeGroup(key, g);
+        }
+    }
+
+    // =====================================================================
+    //  BINANCE ORDER BOOK (walls) - unchanged logic
+    // =====================================================================
+    function handleBinanceDepth(raw) {
+        const payload = safeParse(raw);
+        if (!payload || !payload.data || !payload.stream) return;
+        const coin = payload.stream.split('@')[0].toUpperCase(); // "btcusdt@depth20@100ms" -> BTCUSDT
+        if (!STATE.bids[coin]) return;
+        processOrderBook(coin, payload.data.b || [], 'bid');
+        processOrderBook(coin, payload.data.a || [], 'ask');
     }
 
     function pushCancelled(whale, now) {
         STATE.cancelledOrders.unshift({ ...whale, status: whale.filled ? 'نُفذ' : 'أُلغي', gone: true, since: whale.time, time: now });
-        if(whale.value >= wallMin(whale.coin) * 3) addAlert('system', `${whale.filled ? 'تنفيذ/امتصاص' : 'سحب'} جدار ${whale.type==='bid'?'طلب':'عرض'} على ${whale.coin.replace('USDT','')} عند ${fmtPrice(whale.price)} (${formatCurrency(whale.value)})`);
-        if(STATE.cancelledOrders.length > MAX_CANCELLED) STATE.cancelledOrders.pop();
+        if (whale.value >= wallMin(whale.coin) * 3) addAlert('system', `${whale.filled ? 'تنفيذ/امتصاص' : 'سحب'} جدار ${whale.type === 'bid' ? 'طلب' : 'عرض'} على ${coinName(whale.coin)} عند ${fmtPrice(whale.price)} (${formatCurrency(whale.value)})`);
+        if (STATE.cancelledOrders.length > MAX_CANCELLED) STATE.cancelledOrders.pop();
     }
 
     // Process one full order-book SNAPSHOT side (top N levels) for a coin.
     // Because every message is a complete snapshot, whatever is missing from it is gone from the book.
     function processOrderBook(coin, levels, type) {
-        if(!levels.length) return;
+        if (!levels.length) return;
         const now = Date.now();
         const book = new Map();   // price -> qty, replaced wholesale on each snapshot
         const seen = new Set();   // whale keys present in this snapshot
@@ -481,20 +766,20 @@
         for (const [priceStr, qtyStr] of levels) {
             const price = parseFloat(priceStr);
             const qty = parseFloat(qtyStr);
-            if(!(qty > 0)) continue;
+            if (!(qty > 0)) continue;
             book.set(price, qty);
             edge = type === 'bid' ? Math.min(edge, price) : Math.max(edge, price);
 
             const value = price * qty;
-            if(value > maxV) maxV = value;
-            if(value < th * 0.7) continue; // 70%..100%: only kept if already tracked (hysteresis, below)
+            if (value > maxV) maxV = value;
+            if (value < th * 0.7) continue; // 70%..100%: only kept if already tracked (hysteresis, below)
 
             const key = `${coin}-${priceStr}-${type}`;
-            if(value < th && !STATE.activeWhales.has(key)) continue; // a wall hovering near the threshold must not flicker in/out
+            if (value < th && !STATE.activeWhales.has(key)) continue; // a wall hovering near the threshold must not flicker in/out
             seen.add(key);
             const whale = STATE.activeWhales.get(key);
-            if(whale) {
-                if(Math.abs(whale.value - value) > (th * 0.1)) {
+            if (whale) {
+                if (Math.abs(whale.value - value) > (th * 0.1)) {
                     whale.status = 'مُعدل';
                     whale.value = value;
                     whale.qty = qty;
@@ -502,22 +787,22 @@
             } else {
                 // distance is NOT stored: it is computed against the live price at render time
                 STATE.activeWhales.set(key, { coin, type, price, qty, value, status: 'مستمر', time: now });
-                if(value >= th * 3 && now - bootTime > 3000) {
-                    addAlert(type === 'bid' ? 'buy' : 'sell', `جدار ${type==='bid'?'طلب':'عرض'} ضخم على ${coin.replace('USDT','')} عند ${fmtPrice(price)} بقيمة ${formatCurrency(value)}`);
+                if (value >= th * 3 && now - bootTime > 3000) {
+                    addAlert(type === 'bid' ? 'buy' : 'sell', `جدار ${type === 'bid' ? 'طلب' : 'عرض'} ضخم على ${coinName(coin)} عند ${fmtPrice(price)} بقيمة ${formatCurrency(value)}`);
                 }
             }
         }
 
         STATE.depthInfo[coin] = Object.assign(STATE.depthInfo[coin] || {}, { t: now, [type]: maxV });
-        if(type === 'bid') STATE.bids[coin] = book; else STATE.asks[coin] = book;
+        if (type === 'bid') STATE.bids[coin] = book; else STATE.asks[coin] = book;
 
         // Reconcile: whales that were tracked but are not in this snapshot. Deleted immediately (no timers).
         for (const [key, whale] of STATE.activeWhales) {
-            if(whale.coin !== coin || whale.type !== type || seen.has(key)) continue;
+            if (whale.coin !== coin || whale.type !== type || seen.has(key)) continue;
             STATE.activeWhales.delete(key);
             const outOfRange = type === 'bid' ? whale.price < edge : whale.price > edge;
             // Still in the book but below threshold, or pushed outside the visible N levels: not a cancellation.
-            if(outOfRange || book.has(whale.price)) continue;
+            if (outOfRange || book.has(whale.price)) continue;
             // Heuristic: if the market traded through the wall's price it was most likely filled, otherwise pulled.
             const px = STATE.prices[coin];
             whale.filled = px > 0 && (type === 'bid' ? px <= whale.price : px >= whale.price);
@@ -525,48 +810,204 @@
         }
     }
 
-    // Process Large Trades (Immediate Execution)
-    function processLargeTrade(coin, price, value, type) {
-        const trade = { coin, price, value, type, time: Date.now() };
-        STATE.largeTrades.unshift(trade);
-        if(STATE.largeTrades.length > MAX_TRADES) STATE.largeTrades.length = MAX_TRADES; 
-        
-        if(value < MEGA_TRADE) addAlert(type, `صفقة ${type==='buy'?'شراء':'بيع'} ماركت لعملة ${coin} بـ ${formatCurrency(value)}`);
-        
-        if(value < MEGA_TRADE && value >= tradeMin(coin) * 2) beep(type);
-    }
-
     // Alerts System
     function addAlert(type, msg) {
         const alert = { type, msg, time: Date.now() };
         STATE.alerts.unshift(alert);
-        if(STATE.alerts.length > 50) STATE.alerts.length = 50;
-        alertsDirty = true; 
+        if (STATE.alerts.length > 50) STATE.alerts.length = 50;
+        alertsDirty = true;
+    }
+
+    // =====================================================================
+    //  CONNECTORS
+    // =====================================================================
+    connectors.binanceDepth = makeConnector('binanceDepth', {
+        url: () => `${WS_DEPTH_URL}?streams=${COINS.map(c => `${c.toLowerCase()}@depth${DEPTH_LEVELS}@100ms`).join('/')}`,
+        // Stale books from the old connection must not be mistaken for cancellations on the first new snapshot.
+        beforeConnect() { STATE.activeWhales.clear(); COINS.forEach(c => { STATE.bids[c] = new Map(); STATE.asks[c] = new Map(); }); bootTime = Date.now(); },
+        handle: handleBinanceDepth
+    });
+    connectors.binance = makeConnector('binance', {
+        url: () => `${WS_TRADES_URL}?streams=${COINS.map(c => `${c.toLowerCase()}@aggTrade`).join('/')}`,
+        handle: handleBinanceTrade
+    });
+    connectors.bybit = makeConnector('bybit', {
+        url: () => WS_BYBIT_URL,
+        onOpen: ws => ws.send(JSON.stringify({ op: 'subscribe', args: COINS.map(c => 'publicTrade.' + SYM.bybit(c)) })),
+        ping: ws => ws.send(JSON.stringify({ op: 'ping' })), pingMs: 20000, // docs: ping every 20s
+        handle: handleBybit
+    });
+    connectors.okx = makeConnector('okx', {
+        url: () => WS_OKX_URL,
+        onOpen: ws => ws.send(JSON.stringify({ op: 'subscribe', args: COINS.map(c => ({ channel: OKX_TRADES_CHANNEL, instId: SYM.okx(c) })) })),
+        ping: ws => ws.send('ping'), pingMs: 20000, // docs: plain-text "ping" if nothing was received within <30s
+        handle: handleOkx
+    });
+    connectors.gate = makeConnector('gate', {
+        url: () => WS_GATE_URL,
+        onOpen: ws => ws.send(JSON.stringify({ time: Math.floor(Date.now() / 1000), channel: 'futures.trades', event: 'subscribe', payload: COINS.map(c => SYM.gate(c)) })),
+        ping: ws => ws.send(JSON.stringify({ time: Math.floor(Date.now() / 1000), channel: 'futures.ping' })), pingMs: 10000, // app-level ping; protocol pings are answered by the browser
+        handle: handleGate
+    });
+    connectors.coinbase = makeConnector('coinbase', {
+        url: () => WS_CB_URL,
+        unsupported: COINS.filter(c => !SYM.coinbase(c)).map(coinName),
+        onOpen: ws => {
+            ws.send(JSON.stringify({ type: 'subscribe', channel: 'market_trades', product_ids: COINS.map(c => SYM.coinbase(c)).filter(Boolean) }));
+            ws.send(JSON.stringify({ type: 'subscribe', channel: 'heartbeats' })); // keeps idle subscriptions open (docs: ~1s heartbeat)
+        },
+        handle: handleCoinbase
+    });
+
+    // =====================================================================
+    //  CONTRACT SIZES (OKX / Gate) - live fetch with fallback table
+    // =====================================================================
+    function fetchJson(url) {
+        const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timer = ctl ? setTimeout(() => ctl.abort(), 7000) : null;
+        return fetch(url, ctl ? { signal: ctl.signal } : {}).then(r => { if (timer) clearTimeout(timer); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    }
+    function refreshContractSizes() {
+        COINS.forEach(coin => {
+            const base = coinName(coin);
+            fetchJson(`https://www.okx.com/api/v5/public/instruments?instType=SWAP&instId=${encodeURIComponent(SYM.okx(coin))}`).then(j => {
+                const d = j && j.code === '0' && j.data && j.data[0];
+                if (!d || d.ctValCcy !== base) return;           // inverse / unexpected contract: keep fallback
+                const v = parseFloat(d.ctVal) * (parseFloat(d.ctMult) || 1);
+                if (v > 0 && isFinite(v)) CONTRACT.okx[coin] = { v, src: 'live' };
+            }).catch(() => {});
+            fetchJson(`https://api.gateio.ws/api/v4/futures/usdt/contracts/${encodeURIComponent(SYM.gate(coin))}`).then(j => {
+                const v = parseFloat(j && j.quanto_multiplier);
+                if (v > 0 && isFinite(v)) CONTRACT.gate[coin] = { v, src: 'live' };
+            }).catch(() => {});
+        });
+    }
+
+    // =====================================================================
+    //  SANITY CHECKS (price vs Binance, volume vs Binance)
+    // =====================================================================
+    const PRICE_DEV_LIMIT = 0.01;   // >1% away from Binance -> warning
+    const VOL_RATIO_LIMIT = 3;      // exchange raw notional > 3x Binance's on the same coin/window -> suspect contract size
+    function sanityCheck() {
+        const now = Date.now();
+        const volReady = now - VOL.start >= 90000;
+        EX_ORDER.forEach(ex => {
+            if (ex === 'binance') return;
+            const warns = {};
+            COINS.forEach(coin => {
+                const bp = STATE.exPrice.binance[coin], ep = STATE.exPrice[ex][coin];
+                if (bp && ep && now - bp.t < 15000 && now - ep.t < 15000) {
+                    const dev = Math.abs(ep.p - bp.p) / bp.p;
+                    if (dev > PRICE_DEV_LIMIT) warns['px' + coin] = `سعر ${coinName(coin)} يختلف ${(dev * 100).toFixed(1)}% عن Binance`;
+                }
+                const bv = VOL.v.binance[coin] || 0, ev = VOL.v[ex][coin] || 0;
+                if (volReady && bv >= 300000 && ev > bv * VOL_RATIO_LIMIT) warns['vol' + coin] = `حجم ${coinName(coin)} يفوق Binance بـ ${(ev / bv).toFixed(1)}× — تحقق من حجم العقد`;
+            });
+            STATE.ex[ex].warns = warns;
+        });
+        if (now - VOL.start >= 600000) { VOL = { start: now, v: {} }; EX_ORDER.forEach(ex => { VOL.v[ex] = {}; }); }
+    }
+    function exWarnings(ex) {
+        const list = Object.values((STATE.ex[ex] && STATE.ex[ex].warns) || {});
+        if (CONTRACT[ex] && COINS.some(c => CONTRACT[ex][c].src !== 'live')) list.push('حجم العقد من جدول افتراضي غير محقق (تعذر جلب القيم الحية)');
+        return list;
     }
 
     // Helpers
     function formatCurrency(n) {
         return n < 0 ? '-' + formatCurrency(-n) : fmtPos(n); // negative deltas used to render as "$-150000"
     }
+    function fmtDelta(n) { return (n > 0 ? '+' : '') + formatCurrency(n); }
     function fmtPrice(p) {
-        if(p >= 100) return p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (p >= 100) return p.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         return p.toFixed(p >= 1 ? 3 : 5);
     }
     function fmtAge(ms) {
         const s = Math.max(0, Math.floor(ms / 1000));
-        if(s < 60) return s + 'ث';
-        if(s < 3600) return Math.floor(s / 60) + 'د ' + (s % 60) + 'ث';
+        if (s < 60) return s + 'ث';
+        if (s < 3600) return Math.floor(s / 60) + 'د ' + (s % 60) + 'ث';
         return Math.floor(s / 3600) + 'س ' + Math.floor((s % 3600) / 60) + 'د';
     }
     function fmtPos(num) {
-        if(num >= 1000000) return '$' + (num/1000000).toFixed(2) + 'M';
-        if(num >= 1000) return '$' + (num/1000).toFixed(1) + 'K';
+        if (num >= 1000000) return '$' + (num / 1000000).toFixed(2) + 'M';
+        if (num >= 1000) return '$' + (num / 1000).toFixed(1) + 'K';
         return '$' + num.toFixed(0);
     }
-    
     function formatTime(ms) {
         const d = new Date(ms);
-        return d.toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    const deltaColor = d => d > 0 ? 'var(--color-buy)' : (d < 0 ? 'var(--color-sell)' : 'var(--text-main)');
+    function exBadge(ex) {
+        const m = EXCHANGES[ex];
+        return `<span class="ex-badge" style="--c:${m.color}">${m.name}<i>${m.market === 'spot' ? 'Spot' : 'F'}</i></span>`;
+    }
+
+    // ================= STATUS STRIP =================
+    const chipEls = {};
+    function buildStrip() {
+        const strip = $('ex-strip');
+        strip.textContent = '';
+        const items = EX_ORDER.map(id => ({ id, filter: true })).concat([{ id: 'binanceDepth', filter: false }]);
+        items.forEach(it => {
+            const label = document.createElement('label');
+            label.className = 'ex-chip' + (it.filter ? '' : ' nofilter');
+            const els = { label };
+            if (it.filter) {
+                const cb = document.createElement('input');
+                cb.type = 'checkbox'; cb.checked = EX_ON[it.id] !== false;
+                cb.setAttribute('aria-label', 'تفعيل ' + EXCHANGES[it.id].name);
+                cb.addEventListener('change', () => toggleEx(it.id, cb.checked));
+                label.appendChild(cb); els.cb = cb;
+            }
+            els.dot = document.createElement('span'); els.dot.className = 'sdot'; label.appendChild(els.dot);
+            const name = document.createElement('span'); name.className = 'ex-name';
+            name.textContent = it.filter ? EXCHANGES[it.id].name : 'Binance (الجدران)';
+            if (it.filter) name.style.color = EXCHANGES[it.id].color;
+            label.appendChild(name);
+            const mk = document.createElement('span'); mk.className = 'ex-mk';
+            mk.textContent = it.filter ? (EXCHANGES[it.id].market === 'spot' ? 'Spot' : 'Futures') : 'Order Book';
+            label.appendChild(mk);
+            els.meta = document.createElement('span'); els.meta.className = 'ex-meta'; label.appendChild(els.meta);
+            els.warn = document.createElement('span'); els.warn.className = 'ex-warn'; label.appendChild(els.warn);
+            strip.appendChild(label);
+            chipEls[it.id] = els;
+        });
+        const note = document.createElement('div');
+        note.className = 'src-note';
+        note.textContent = 'الجدران المعلقة من Binance Futures فقط • الصفقات المنفذة من عدة منصات (فلتر المنصات يؤثر على الأرقام والجدول).';
+        strip.appendChild(note);
+    }
+
+    function renderStatus(now) {
+        let open = 0, total = 0;
+        Object.keys(chipEls).forEach(id => {
+            const st = STATE.ex[id], els = chipEls[id];
+            if (!st) return;
+            total++;
+            if (st.state === 'open') open++;
+            els.dot.className = 'sdot' + (st.state === 'open' ? ' ok' : st.state === 'down' ? ' bad' : '');
+            let meta;
+            if (st.state === 'open') meta = 'منذ ' + fmtAge(now - st.lastMsg);
+            else if (st.state === 'connecting') meta = 'يتصل…';
+            else meta = 'إعادة الاتصال خلال ' + Math.max(0, Math.ceil((st.retryAt - now) / 1000)) + 'ث';
+            if (st.unsupported.length) meta += ' • بدون: ' + st.unsupported.join('،');
+            els.meta.textContent = meta;
+            const warns = EXCHANGES[id] ? exWarnings(id) : [];
+            els.warn.textContent = warns.length ? '⚠ ' + warns.length : '';
+            const tip = [];
+            if (st.state === 'down') tip.push('معطّل/محجوب: ' + (st.reason || ''));
+            else if (st.reason) tip.push(st.reason);
+            warns.forEach(w => tip.push('⚠ ' + w));
+            if (st.errors) tip.push('رسائل تم تجاهلها: ' + st.errors);
+            els.label.title = tip.join('\n');
+            if (els.cb) els.label.classList.toggle('off', EX_ON[id] === false);
+        });
+        const dot = $('ws-dot'), txt = $('ws-text');
+        dot.classList.toggle('offline', open === 0);
+        dot.classList.toggle('partial', open > 0 && open < total);
+        txt.textContent = open === total ? 'متصل' : (open === 0 ? 'جاري إعادة الاتصال...' : `متصل ${open}/${total}`);
+        txt.style.color = open === total ? 'var(--color-buy)' : (open === 0 ? 'var(--color-sell)' : 'var(--color-alert)');
     }
 
     // ================= UI RENDERING =================
@@ -575,44 +1016,62 @@
     function renderUI() {
         if (renderScheduled) return;
         renderScheduled = true;
-        
+
         requestAnimationFrame(() => { try {
             const now = Date.now();
             if (PAUSED) return;
             // Drop trades older than 24h (the longest timeframe offered)
-            while (STATE.largeTrades.length && now - STATE.largeTrades[STATE.largeTrades.length - 1].time > 86400000) STATE.largeTrades.pop();
+            while (STATE.largeTrades.length && now - STATE.largeTrades[STATE.largeTrades.length - 1].lastT > 86400000) STATE.largeTrades.pop();
             const cp = STATE.prices[ACTIVE_COIN_FILTER];
             $('live-price').textContent = cp > 0 ? '$' + fmtPrice(cp) : '—';
-            if (cp > 0) document.title = `${ACTIVE_COIN_FILTER.replace('USDT','')} ${fmtPrice(cp)} | Whale Tracker`;
-            if (alertsDirty) { alertsDirty = false; renderAlerts(); }
-            
+            if (cp > 0) document.title = `${coinName(ACTIVE_COIN_FILTER)} ${fmtPrice(cp)} | Whale Tracker`;
+            if (alertsDirty || STATE.pinned.some(m => m.g.open)) { alertsDirty = false; renderAlerts(); }
+            renderStatus(now);
+
             // Apply Coin Filter directly
             let whalesArray = Array.from(STATE.activeWhales.values()).filter(w => w.coin === ACTIVE_COIN_FILTER);
-            let filteredTrades = STATE.largeTrades.filter(t => t.coin === ACTIVE_COIN_FILTER);
+            let coinTrades = STATE.largeTrades.filter(t => t.coin === ACTIVE_COIN_FILTER);
 
             // Filter Trades by Timeframe
             if (TIMEFRAME_FILTER !== 'ALL') {
-                filteredTrades = filteredTrades.filter(t => (now - t.time) <= TIMEFRAME_FILTER);
+                coinTrades = coinTrades.filter(t => (now - t.lastT) <= TIMEFRAME_FILTER);
             }
 
-            // Calculate Aggregated Stats for Trades (CVD Delta)
-            let totalFilteredLongVal = 0;
-            let totalFilteredShortVal = 0;
-
-            filteredTrades.forEach(t => {
-                if(t.type === 'buy') totalFilteredLongVal += t.value;
-                else totalFilteredShortVal += t.value;
+            // CVD: per exchange (all), and totals over enabled exchanges only. Futures and Spot are never mixed without a split.
+            const per = {}; EX_ORDER.forEach(ex => { per[ex] = { b: 0, s: 0 }; });
+            const tot = { all: { b: 0, s: 0 }, futures: { b: 0, s: 0 }, spot: { b: 0, s: 0 } };
+            coinTrades.forEach(t => {
+                const k = t.side === 'buy' ? 'b' : 's';
+                per[t.exchange][k] += t.value;
+                if (EX_ON[t.exchange]) { tot.all[k] += t.value; tot[t.market === 'spot' ? 'spot' : 'futures'][k] += t.value; }
             });
+            const filteredTrades = coinTrades.filter(t => EX_ON[t.exchange]);
 
-            document.getElementById('total-filtered-long').innerText = formatCurrency(totalFilteredLongVal);
-            document.getElementById('total-filtered-short').innerText = formatCurrency(totalFilteredShortVal);
-            
-            const delta = totalFilteredLongVal - totalFilteredShortVal;
-            const deltaEl = document.getElementById('filtered-delta');
-            deltaEl.innerText = (delta > 0 ? '+' : '') + formatCurrency(delta);
-            deltaEl.style.color = delta > 0 ? 'var(--color-buy)' : (delta < 0 ? 'var(--color-sell)' : 'var(--text-main)');
+            $('total-filtered-long').innerText = formatCurrency(tot.all.b);
+            $('total-filtered-short').innerText = formatCurrency(tot.all.s);
+            const setDelta = (id, subId, v) => {
+                const d = v.b - v.s, el = $(id);
+                el.innerText = fmtDelta(d); el.style.color = deltaColor(d);
+                if (subId) $(subId).innerText = `▲ ${formatCurrency(v.b)}  ▼ ${formatCurrency(v.s)}`;
+            };
+            setDelta('filtered-delta', null, tot.all);
+            setDelta('cvd-fut', 'cvd-fut-sub', tot.futures);
+            setDelta('cvd-spot', 'cvd-spot-sub', tot.spot);
 
-            // 2. Long & Short Interests (distance is computed live from the current price)
+            // Per-exchange breakdown
+            let bd = '<div class="bd-title">تفصيل لكل منصة (الفريم والعملة المختارة)</div>';
+            EX_ORDER.forEach(ex => {
+                const v = per[ex], d = v.b - v.s, sum = v.b + v.s, pct = sum > 0 ? (v.b / sum) * 100 : 50;
+                bd += `<div class="bd-card${EX_ON[ex] ? '' : ' off'}">
+                    <div class="bd-row">${exBadge(ex)}<span>${EX_ON[ex] ? '' : 'مستبعدة'}</span></div>
+                    <div class="bd-row"><span class="text-buy">شراء</span><span>${formatCurrency(v.b)}</span></div>
+                    <div class="bd-row"><span class="text-sell">بيع</span><span>${formatCurrency(v.s)}</span></div>
+                    <div class="bd-row"><span>الفرق</span><b style="color:${deltaColor(d)}">${fmtDelta(d)}</b></div>
+                    <div class="bd-bar"><i style="width:${pct}%"></i></div></div>`;
+            });
+            $('breakdown').innerHTML = bd;
+
+            // 2. Long & Short Interests (Binance only; distance is computed live from the current price)
             const currentPrice = STATE.prices[ACTIVE_COIN_FILTER];
             const di = STATE.depthInfo[ACTIVE_COIN_FILTER];
             const emptyMsg = side => !di ? 'في انتظار بيانات الدفتر...' : `لا جدران ≥ ${formatCurrency(wallMin(ACTIVE_COIN_FILTER))} (أكبر مستوى ظاهر: ${formatCurrency(di[side] || 0)})`;
@@ -627,7 +1086,7 @@
                 const distText = d === null ? '—' : (d > 0 ? '+' : '') + d.toFixed(2) + '%';
                 return `
                     <tr style="opacity: ${w.gone ? '0.5' : '1'}">
-                        <td><b>${w.coin.replace('USDT','')}</b></td>
+                        <td><b>${coinName(w.coin)}</b></td>
                         <td class="price">${fmtPrice(w.price)}</td>
                         <td>${formatCurrency(w.value)}</td>
                         <td dir="ltr">${distText}</td>
@@ -638,31 +1097,36 @@
             };
 
             const recentlyGone = STATE.cancelledOrders.filter(o => o.coin === ACTIVE_COIN_FILTER && (now - o.time) <= CANCELLED_VISIBLE_MS);
-            const rows = whalesArray.sort((a,b) => b.value - a.value).concat(recentlyGone);
+            const rows = whalesArray.sort((a, b) => b.value - a.value).concat(recentlyGone);
 
             let longHtml = '', shortHtml = '';
             rows.forEach(w => {
-                if(w.type === 'bid') longHtml += rowHtml(w);
+                if (w.type === 'bid') longHtml += rowHtml(w);
                 else shortHtml += rowHtml(w);
             });
 
             document.getElementById('long-interest-body').innerHTML = longHtml || `<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">${emptyMsg('bid')}</td></tr>`;
             document.getElementById('short-interest-body').innerHTML = shortHtml || `<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">${emptyMsg('ask')}</td></tr>`;
 
-            // 3. Trades List
+            // 3. Trades List (aggregated groups)
             let tradesHtml = '';
             filteredTrades.slice(0, 50).forEach(t => {
+                const range = t.minP === t.maxP ? fmtPrice(t.minP) : `${fmtPrice(t.minP)} – ${fmtPrice(t.maxP)}`;
                 tradesHtml += `
-                    <tr class="text-${t.type}">
-                        <td>${formatTime(t.time)}</td>
-                        <td><b>${t.coin.replace('USDT','')}</b></td>
-                        <td>${t.type === 'buy' ? 'شراء ماركت' : 'بيع ماركت'}</td>
-                        <td>${formatCurrency(t.value)}</td>
+                    <tr class="text-${t.side}">
+                        <td>${formatTime(t.lastT)}</td>
+                        <td>${exBadge(t.exchange)}</td>
+                        <td><b>${coinName(t.coin)}</b></td>
+                        <td>${t.side === 'buy' ? 'شراء ماركت' : 'بيع ماركت'}${t.open ? ' <span class="live-tag">جارية</span>' : ''}</td>
+                        <td class="price">${fmtPrice(t.price)}</td>
+                        <td class="price">${range}</td>
+                        <td>${t.n}</td>
+                        <td><b>${formatCurrency(t.value)}</b></td>
                     </tr>
                 `;
             });
-            document.getElementById('trades-body').innerHTML = tradesHtml || `<tr><td colspan="4" style="text-align:center">في انتظار تنفيذ صفقات ماركت...</td></tr>`;
-            
+            document.getElementById('trades-body').innerHTML = tradesHtml || `<tr><td colspan="8" style="text-align:center">في انتظار تنفيذ صفقات ماركت...</td></tr>`;
+
         } catch (e) { console.error(e); } finally { renderScheduled = false; } // a render error must never freeze the UI
         });
     }
@@ -677,13 +1141,13 @@
                 </div>
             `;
         });
-        const pinHtml = STATE.pinned.map(m => `
-            <div class="mega-item ${m.type}">
+        const pinHtml = STATE.pinned.map(m => { const g = m.g; return `
+            <div class="mega-item ${g.side}">
                 <button class="mega-x" onclick="dismissMega(${m.id})" aria-label="إزالة التنبيه">✕</button>
-                <div class="mega-title">🐋 ${m.type === 'buy' ? 'شراء' : 'بيع'} ماركت ${m.coin.replace('USDT','')}</div>
-                <div class="mega-val">${formatCurrency(m.value)}</div>
-                <div class="alert-time">السعر: ${fmtPrice(m.price)} - الوقت: ${formatTime(m.time)}</div>
-            </div>`).join('');
+                <div class="mega-title">🐋 ${g.side === 'buy' ? 'شراء' : 'بيع'} ماركت ${coinName(g.coin)} · ${exLabel(g)}${g.open ? ' <span class="live-tag">جارية</span>' : ''}</div>
+                <div class="mega-val">${formatCurrency(g.value)}</div>
+                <div class="alert-time">السعر المتوسط: ${fmtPrice(g.price)} - ${g.n} تنفيذ - الوقت: ${formatTime(g.startT)}</div>
+            </div>`; }).join('');
         document.getElementById('alerts-body').innerHTML = (pinHtml ? `<div class="pinned">${pinHtml}</div>` : '') + html;
     }
 
@@ -692,17 +1156,18 @@
 
     function init() {
         updateFilters();
-        addAlert('system', 'جاري الاتصال بالبث المباشر...');
-        connectWS();
+        buildStrip();
+        addAlert('system', 'جاري الاتصال بالبث المباشر من عدة منصات...');
+        Object.keys(connectors).forEach(k => connectors[k].connect()); // each source connects and reconnects independently
+        refreshContractSizes();
+        setInterval(refreshContractSizes, CONTRACT_REFRESH_MS);
         setInterval(renderUI, RENDER_INTERVAL_MS);
+        setInterval(() => sweepGroups(), 250);
+        setInterval(sanityCheck, 5000);
         syncButtons();
-        // Watchdog: a socket can die silently; no data for 15s -> force a reconnect.
-        setInterval(() => {
-            if (!reconnectTimer && Date.now() - lastMsg > 15000) [wsDepth, wsTrades].forEach(w => { try { w.close(); } catch (e) {} });
-        }, 5000);
     }
 
-    init();
+    if (!globalThis.__WT_TEST__) init();
 
 </script>
 </body>
